@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCA Network — Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f9fafb; }
+  #map { width: 100%; height: 520px; border-radius: 12px; border: 1px solid #e5e7eb; }
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    padding: 12px 16px; background: white; border: 1px solid #e5e7eb;
+    border-radius: 0 0 12px 12px; border-top: none;
+    font-size: 12px; color: #6b7280;
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .dot-founder { background: #1D9E75; border: 2px solid #085041; }
+  .dot-leader { background: #3b82f6; border: 2px solid #1d4ed8; }
+  .dot-member { background: #f59e0b; border: 2px solid #b45309; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="legend">
+  <div class="leg-item"><div class="dot dot-founder"></div> Founder</div>
+  <div class="leg-item"><div class="dot dot-leader"></div> Country leader</div>
+  <div class="leg-item"><div class="dot dot-member"></div> Member</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const camps = [
+  {name:"El Tip Viajero",country:"Peru",city:"Lima",role:"founder",tags:["Urban camping","Storage","TIP","SOAT"],wa:"51941483585",lat:-12.016,lon:-77.076},
+  {name:"Finca Sommerwind",country:"Ecuador",city:"Ibarra",role:"leader",tags:["Camping","Overlander"],wa:"",lat:0.38,lon:-78.09},
+  {name:"Finca La Bonanza — Chez Kika",country:"Colombia",city:"Silvia",role:"leader",tags:["Camping","Hostal"],wa:"",lat:2.614,lon:-76.465},
+  {name:"Ecocamp Huacachina",country:"Peru",city:"Ica",role:"member",tags:["Eco camping"],wa:"",lat:-14.089,lon:-75.764},
+  {name:"PatagonFox Camping Express",country:"Chile",city:"Santiago",role:"leader",tags:["Camping"],wa:"",lat:-33.383,lon:-70.856},
+  {name:"La Casita — Overlander Lodging",country:"Brazil",city:"Navegantes",role:"leader",tags:["Lodging","Camping"],wa:"5547992414009",lat:-26.857,lon:-48.647},
+  {name:"The Overland Embassy",country:"Panama",city:"Panama City",role:"leader",tags:["Shipping","Repairs"],wa:"",lat:9.014,lon:-79.487},
+  {name:"Hotel Conzulado 96 — Colán Beach",country:"Peru",city:"Colán, Piura",role:"member",tags:["Lodging","Beach"],wa:"51941483585",lat:-5.004,lon:-81.067},
+  {name:"Tourism Dios es Amor",country:"Peru",city:"Aguaytia",role:"member",tags:["Tours","Adventure"],wa:"",lat:-9.039,lon:-75.509},
+  {name:"Cabañas Del Sauce",country:"Argentina",city:"Paraná",role:"leader",tags:["Lodging","Camping"],wa:"549343572-4178",lat:-31.744,lon:-60.356},
+  {name:"Peru Titicaca & Connections",country:"Peru",city:"Puno",role:"member",tags:["Tours"],wa:"",lat:-15.841,lon:-70.028},
+  {name:"Finca Mi Casita",country:"Colombia",city:"Armenia, Quindío",role:"member",tags:["Camping","Lodging"],wa:"",lat:4.525,lon:-75.745},
+  {name:"Camping Las Colinas",country:"Bolivia",city:"La Paz",role:"member",tags:["Camping","Lodging"],wa:"59168125858",lat:-16.552,lon:-68.066},
+  {name:"CamperPark PatagonFox Ralun",country:"Chile",city:"Ralún",role:"member",tags:["Camping"],wa:"",lat:-41.367,lon:-72.347},
+  {name:"Zapparancho",country:"Argentina",city:"Buenos Aires area",role:"member",tags:["Lodging","Camping"],wa:"",lat:-34.819,lon:-58.937},
+  {name:"Finca El Manantial",country:"Colombia",city:"Bolívar",role:"member",tags:["Camping","Lodging"],wa:"573153859820",lat:10.298,lon:-75.434},
+  {name:"Fazendinha Eros — Chácara",country:"Brazil",city:"Boa Vista area",role:"member",tags:["Camping"],wa:"",lat:2.818,lon:-60.595},
+  {name:"Sierra Alisos Hotel de Campo",country:"Ecuador",city:"Mindo area",role:"member",tags:["Hotel","Camping"],wa:"",lat:-0.403,lon:-78.576},
+  {name:"Neumanns Place",country:"Argentina",city:"Salta",role:"member",tags:["Lodging"],wa:"",lat:-24.699,lon:-65.484},
+  {name:"Andean Roads Motorhome Rentals",country:"Argentina",city:"Buenos Aires",role:"member",tags:["Rentals"],wa:"",lat:-34.498,lon:-58.723},
+  {name:"Posada Marina Bella Rada Tilli",country:"Argentina",city:"Chubut",role:"member",tags:["Lodging"],wa:"5492976244742",lat:-45.928,lon:-67.560},
+  {name:"Resort Hotel Los Ceibos",country:"Bolivia",city:"Tarija",role:"member",tags:["Hotel"],wa:"",lat:-21.531,lon:-64.740},
+  {name:"Camping Ráquira El Molino",country:"Colombia",city:"Ráquira",role:"member",tags:["Camping","Restaurant"],wa:"",lat:5.546,lon:-73.637},
+  {name:"Camping El Paraíso Verde",country:"Paraguay",city:"",role:"member",tags:["Camping"],wa:"595976394880",lat:-27.161,lon:-56.243},
+  {name:"Refugio de Ruta",country:"Uruguay",city:"",role:"member",tags:["Camping","Lodging"],wa:"",lat:-31.418,lon:-57.937},
+  {name:"Hotel Campestre Lagos de Venecia",country:"Colombia",city:"Pereira area",role:"member",tags:["Glamping","Camping"],wa:"",lat:4.890,lon:-75.623},
+  {name:"Camping and Rooms — Pucallpa",country:"Peru",city:"Pucallpa",role:"member",tags:["Camping","Rooms"],wa:"51941483585",lat:-8.352,lon:-74.578},
+  {name:"Swiss Wassi",country:"Peru",city:"Tumbes area",role:"member",tags:["Camping","Rooms"],wa:"",lat:-3.725,lon:-80.760},
+  {name:"Hostal Andenes del Sol",country:"Peru",city:"Huaraz",role:"member",tags:["Hostal","Tours"],wa:"",lat:-9.539,lon:-77.529},
+  {name:"Hospedaje Cusco Family — El Tip Viajero",country:"Peru",city:"Cusco",role:"member",tags:["Apartment"],wa:"51941483585",lat:-13.519,lon:-71.960},
+  {name:"Caleta Vidal — Overlander Camping",country:"Peru",city:"Caleta Vidal",role:"member",tags:["Camping"],wa:"51941483585",lat:-10.850,lon:-77.693},
+  {name:"Villamargarita Motorhome Campsite",country:"Colombia",city:"Nariño",role:"member",tags:["Camping"],wa:"",lat:1.208,lon:-77.217},
+  {name:"Padua Hotel Glamping and Camping",country:"Colombia",city:"Nariño",role:"member",tags:["Glamping","Camping"],wa:"573146950049",lat:1.344,lon:-77.284}
+];
+
+const colors = { founder:'#1D9E75', leader:'#3b82f6', member:'#f59e0b' };
+const borders = { founder:'#085041', leader:'#1d4ed8', member:'#b45309' };
+
+const map = L.map('map', { zoomControl: true, scrollWheelZoom: false })
+  .setView([-15, -68], 3);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors', maxZoom: 18
+}).addTo(map);
+
+camps.forEach(c => {
+  const color = colors[c.role];
+  const border = borders[c.role];
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid ${border};box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
+    iconSize: [14,14], iconAnchor: [7,7], popupAnchor: [0,-10]
+  });
+
+  const waBtn = c.wa ? `<a href="https://wa.me/${c.wa.replace(/\D/g,'')}" target="_blank"
+    style="display:inline-block;margin-top:8px;padding:5px 12px;background:#dcfce7;color:#166534;
+    border-radius:6px;font-size:12px;text-decoration:none;font-weight:500;">WhatsApp</a>` : '';
+
+  const popup = `
+    <div style="font-family:sans-serif;min-width:180px">
+      <div style="font-size:13px;font-weight:600;color:#111;margin-bottom:4px">${c.name}</div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:6px">${c.country}${c.city?' · '+c.city:''}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">
+        ${c.tags.map(t=>`<span style="font-size:10px;padding:1px 6px;background:#f3f4f6;color:#6b7280;border-radius:4px">${t}</span>`).join('')}
+      </div>
+      ${c.role==='founder'?`<div style="font-size:11px;font-weight:600;color:#1D9E75;margin-top:4px">ARCA Founder</div>`
+        :c.role==='leader'?`<div style="font-size:11px;font-weight:600;color:#1d4ed8;margin-top:4px">Country leader</div>`:''}
+      ${waBtn}
+    </div>`;
+
+  L.marker([c.lat, c.lon], {icon}).addTo(map).bindPopup(popup);
+});
+</script>
+</body>
+</html>

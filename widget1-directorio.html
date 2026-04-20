@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCA Network — Directory</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f9fafb;
+    --white: #ffffff;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 24px 16px; }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap input {
+    width: 100%; padding: 10px 14px 10px 38px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    background: var(--white); color: var(--text); outline: none;
+  }
+  .search-wrap input:focus { border-color: var(--green); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); }
+
+  select {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius);
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    background: var(--white); color: var(--text); outline: none; cursor: pointer;
+  }
+  select:focus { border-color: var(--green); }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pill {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: 'Inter', sans-serif;
+    border: 1px solid var(--border); background: var(--white); color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .pill.active { background: var(--green); color: white; border-color: var(--green); }
+  .pill:hover:not(.active) { border-color: var(--green); color: var(--green); }
+
+  .count { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .count strong { color: var(--green); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+  .card {
+    background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; transition: all 0.2s; cursor: default;
+  }
+  .card:hover { border-color: var(--green); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(29,158,117,0.1); }
+  .card.founder { border-color: var(--green); border-width: 2px; }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .country-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    background: var(--green-light); color: var(--green-dark); font-weight: 500;
+  }
+  .role-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .role-founder { background: var(--green); color: white; }
+  .role-leader { background: #dbeafe; color: #1e40af; }
+
+  .card-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.3; color: var(--text); }
+  .card-city { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .card-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  .card-footer { display: flex; gap: 8px; }
+  .btn-wa {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; font-family: 'Inter', sans-serif;
+    background: #dcfce7; color: #166534; border: none; cursor: pointer; text-decoration: none; font-weight: 500;
+    transition: background 0.15s;
+  }
+  .btn-wa:hover { background: #bbf7d0; }
+  .btn-map {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; font-family: 'Inter', sans-serif;
+    background: var(--bg); color: var(--muted); border: 1px solid var(--border); cursor: pointer; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .btn-map:hover { border-color: var(--green); color: var(--green); }
+
+  .empty { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="search" placeholder="Search by name, city or service..." oninput="render()">
+  </div>
+  <select id="country-sel" onchange="render()">
+    <option value="">All countries</option>
+  </select>
+</div>
+
+<div class="filters" id="type-filters">
+  <div class="pill active" data-type="all" onclick="setType(this,'all')">All</div>
+  <div class="pill" data-type="camping" onclick="setType(this,'camping')">Camping</div>
+  <div class="pill" data-type="lodging" onclick="setType(this,'lodging')">Lodging</div>
+  <div class="pill" data-type="storage" onclick="setType(this,'storage')">Storage / TIP</div>
+  <div class="pill" data-type="tours" onclick="setType(this,'tours')">Tours</div>
+</div>
+
+<div class="count" id="count"></div>
+<div class="grid" id="grid"></div>
+
+<script>
+const camps = [
+  {name:"El Tip Viajero",country:"Peru",city:"Lima",role:"founder",tags:["Urban camping","Storage","TIP","Apartments","SOAT","Legal"],desc:"ARCA founder. Urban camping, storage, TIP suspension, 24/7 legal assistance.",wa:"51941483585",lat:-12.016,lon:-77.076,types:["camping","lodging","storage"]},
+  {name:"Finca Sommerwind",country:"Ecuador",city:"Ibarra",role:"leader",tags:["Camping","Overlander"],desc:"ARCA leader Ecuador. Lago Yahuarcocha.",wa:"",lat:0.38,lon:-78.09,types:["camping","lodging"]},
+  {name:"Finca La Bonanza — Chez Kika",country:"Colombia",city:"Silvia",role:"leader",tags:["Camping","Hostal"],desc:"Campground La Bonanza. campgroundlabonanza.com",wa:"",lat:2.614,lon:-76.465,types:["camping","lodging"]},
+  {name:"Ecocamp Huacachina",country:"Peru",city:"Ica",role:"member",tags:["Camping","Eco"],desc:"Camping in the Huacachina oasis.",wa:"",lat:-14.089,lon:-75.764,types:["camping"]},
+  {name:"PatagonFox Camping Express",country:"Chile",city:"Santiago",role:"leader",tags:["Camping","Overland"],desc:"Leader Chile. North Gate entrance to Chilean Patagonia.",wa:"",lat:-33.383,lon:-70.856,types:["camping"]},
+  {name:"La Casita — Overlander Lodging",country:"Brazil",city:"Navegantes",role:"leader",tags:["Lodging","Camping"],desc:"Leader Brasil. R. Adolfo Cabral Junior 609.",wa:"5547992414009",lat:-26.857,lon:-48.647,types:["camping","lodging"]},
+  {name:"The Overland Embassy",country:"Panama",city:"Panama City",role:"leader",tags:["Shipping","Repairs","Camping"],desc:"Leader Panama. Shipping logistics, vehicle repairs & maintenance.",wa:"",lat:9.014,lon:-79.487,types:["camping"]},
+  {name:"Hotel Conzulado 96 — Colán Beach",country:"Peru",city:"Colán, Piura",role:"member",tags:["Lodging","Beach camping"],desc:"El Tip Viajero network. Beach hotel and camping.",wa:"51941483585",lat:-5.004,lon:-81.067,types:["camping","lodging"]},
+  {name:"Tourism Dios es Amor — Aguaytia",country:"Peru",city:"Aguaytia",role:"member",tags:["Tours","Adventure","Fishing"],desc:"Adventure tourism, native communities, sport fishing.",wa:"",lat:-9.039,lon:-75.509,types:["tours","lodging"]},
+  {name:"Cabañas Del Sauce",country:"Argentina",city:"Paraná",role:"leader",tags:["Lodging","Camping"],desc:"Leader Argentina. Ruta 12.",wa:"549343572-4178",lat:-31.744,lon:-60.356,types:["camping","lodging"]},
+  {name:"Peru Titicaca & Connections",country:"Peru",city:"Puno",role:"member",tags:["Tours"],desc:"Tourist services around Lake Titicaca.",wa:"",lat:-15.841,lon:-70.028,types:["tours","lodging"]},
+  {name:"Finca Mi Casita",country:"Colombia",city:"Armenia, Quindío",role:"member",tags:["Camping","Lodging"],desc:"Km 4 Vereda La India, Armenia.",wa:"",lat:4.525,lon:-75.745,types:["camping","lodging"]},
+  {name:"Camping Las Colinas",country:"Bolivia",city:"La Paz",role:"member",tags:["Camping","Lodging"],desc:"Contact: Nicolas. 70bs per night.",wa:"59168125858",lat:-16.552,lon:-68.066,types:["camping","lodging"]},
+  {name:"CamperPark PatagonFox Ralun",country:"Chile",city:"Ralún",role:"member",tags:["Camping"],desc:"Chilean Patagonia, Route V-69 to Hornopirén.",wa:"",lat:-41.367,lon:-72.347,types:["camping"]},
+  {name:"Zapparancho",country:"Argentina",city:"Buenos Aires area",role:"member",tags:["Lodging","Camping"],desc:"familiazappfamily.com",wa:"",lat:-34.819,lon:-58.937,types:["camping","lodging"]},
+  {name:"Finca El Manantial — Vida Campestre",country:"Colombia",city:"Bolívar",role:"member",tags:["Camping","Lodging"],desc:"Camping and lodging.",wa:"573153859820",lat:10.298,lon:-75.434,types:["camping","lodging"]},
+  {name:"Fazendinha Eros — Chácara",country:"Brazil",city:"Boa Vista area",role:"member",tags:["Camping"],desc:"Camping in the Amazon region.",wa:"",lat:2.818,lon:-60.595,types:["camping"]},
+  {name:"Sierra Alisos Hotel de Campo",country:"Ecuador",city:"Mindo area",role:"member",tags:["Hotel","Camping"],desc:"Country hotel and camping.",wa:"",lat:-0.403,lon:-78.576,types:["camping","lodging"]},
+  {name:"Neumanns Place",country:"Argentina",city:"Salta — San Lorenzo",role:"member",tags:["Lodging"],desc:"Mountains near Salta City.",wa:"",lat:-24.699,lon:-65.484,types:["lodging"]},
+  {name:"Andean Roads Motorhome Rentals",country:"Argentina",city:"Buenos Aires",role:"member",tags:["Rentals","Camping"],desc:"Motorhome rentals.",wa:"",lat:-34.498,lon:-58.723,types:["camping"]},
+  {name:"Posada Marina Bella Rada Tilli",country:"Argentina",city:"Chubut",role:"member",tags:["Lodging"],desc:"hotelmarinabella@gmail.com",wa:"5492976244742",lat:-45.928,lon:-67.560,types:["lodging"]},
+  {name:"Resort Hotel Los Ceibos",country:"Bolivia",city:"Tarija",role:"member",tags:["Hotel"],desc:"Rooms for travelers.",wa:"",lat:-21.531,lon:-64.740,types:["lodging"]},
+  {name:"Camping Ráquira El Molino",country:"Colombia",city:"Ráquira",role:"member",tags:["Camping","Restaurant"],desc:"Camping, rooms, car house, restaurant.",wa:"",lat:5.546,lon:-73.637,types:["camping","lodging"]},
+  {name:"Camping El Paraíso Verde",country:"Paraguay",city:"",role:"member",tags:["Camping"],desc:"+595 976 394880",wa:"595976394880",lat:-27.161,lon:-56.243,types:["camping"]},
+  {name:"Refugio de Ruta",country:"Uruguay",city:"",role:"member",tags:["Camping","Lodging"],desc:"Fellow travelers Gero & Evelyn. Green space, vehicle help.",wa:"",lat:-31.418,lon:-57.937,types:["camping","lodging"]},
+  {name:"Hotel Campestre Lagos de Venecia",country:"Colombia",city:"Pereira area",role:"member",tags:["Glamping","Camping","Hotel"],desc:"Chalet, glamping, camping, overlanding.",wa:"",lat:4.890,lon:-75.623,types:["camping","lodging"]},
+  {name:"Camping and Rooms — Pucallpa",country:"Peru",city:"Pucallpa",role:"member",tags:["Camping","Rooms"],desc:"El Tip Viajero network.",wa:"51941483585",lat:-8.352,lon:-74.578,types:["camping","lodging"]},
+  {name:"Swiss Wassi",country:"Peru",city:"Tumbes area",role:"member",tags:["Camping","Rooms"],desc:"Camping and rooms.",wa:"",lat:-3.725,lon:-80.760,types:["camping","lodging"]},
+  {name:"Hostal Andenes del Sol",country:"Peru",city:"Huaraz",role:"member",tags:["Hostal","Tours"],desc:"Rooms and tourist agency.",wa:"",lat:-9.539,lon:-77.529,types:["lodging","tours"]},
+  {name:"Hospedaje Airbnb Cusco Family — El Tip Viajero",country:"Peru",city:"Cusco",role:"member",tags:["Apartment","Airbnb"],desc:"Full apartment.",wa:"51941483585",lat:-13.519,lon:-71.960,types:["lodging"]},
+  {name:"Caleta Vidal — Overlander Camping (ETV)",country:"Peru",city:"Caleta Vidal",role:"member",tags:["Camping","Rooms"],desc:"Strategic overlander stop on the Panamericana.",wa:"51941483585",lat:-10.850,lon:-77.693,types:["camping","lodging"]},
+  {name:"Villamargarita Motorhome Campsite",country:"Colombia",city:"Nariño",role:"member",tags:["Camping","Apiterapia"],desc:"NaturMed Apiterapia.",wa:"",lat:1.208,lon:-77.217,types:["camping"]},
+  {name:"Padua Hotel Glamping and Camping",country:"Colombia",city:"Nariño",role:"member",tags:["Glamping","Camping","Hotel"],desc:"paduahostal@gmail.com",wa:"573146950049",lat:1.344,lon:-77.284,types:["camping","lodging"]}
+];
+
+let activeType = 'all';
+const sel = document.getElementById('country-sel');
+const countries = [...new Set(camps.map(c=>c.country))].sort();
+countries.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+
+function setType(el, type) {
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  activeType = type;
+  render();
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const country = sel.value;
+  let filtered = camps.filter(c => {
+    if (country && c.country !== country) return false;
+    if (activeType !== 'all' && !c.types.includes(activeType)) return false;
+    if (q && !c.name.toLowerCase().includes(q) && !c.city.toLowerCase().includes(q) && !c.tags.join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  document.getElementById('count').innerHTML = `Showing <strong>${filtered.length}</strong> member${filtered.length!==1?'s':''}`;
+  const grid = document.getElementById('grid');
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty">No members found. Try a different filter.</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => `
+    <div class="card ${c.role==='founder'?'founder':''}">
+      <div class="card-top">
+        <span class="country-badge">${c.country}${c.city?' · '+c.city:''}</span>
+        ${c.role==='founder'?'<span class="role-badge role-founder">Founder</span>':c.role==='leader'?'<span class="role-badge role-leader">Leader</span>':''}
+      </div>
+      <div class="card-name">${c.name}</div>
+      <div class="card-desc">${c.desc}</div>
+      <div class="tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="card-footer">
+        ${c.wa?`<a class="btn-wa" href="https://wa.me/${c.wa.replace(/\D/g,'')}" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.544 5.876L0 24l6.317-1.522A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.68-.498-5.224-1.37l-.374-.22-3.748.903.938-3.65-.244-.386A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          WhatsApp</a>`:''}
+        <a class="btn-map" href="https://www.google.com/maps?q=${c.lat},${c.lon}" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Map</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+render();
+</script>
+</body>
+</html>

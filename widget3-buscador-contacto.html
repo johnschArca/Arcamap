@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCA Network — Search & Contact</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f9fafb;
+    --white: #ffffff;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; color: var(--text); background: var(--bg); padding: 24px 16px; }
+
+  /* ── SEARCH WIDGET ── */
+  .search-hero {
+    background: white; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+  }
+  .search-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .search-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media(max-width:480px){ .search-grid { grid-template-columns: 1fr; } }
+
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .field select, .field input {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 14px;
+    background: var(--bg); color: var(--text); outline: none;
+  }
+  .field select:focus, .field input:focus { border-color: var(--green); background: white; }
+
+  .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 16px; }
+  .svc-check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .svc-check input[type=checkbox] { accent-color: var(--green); width: 15px; height: 15px; }
+  .svc-check span { font-size: 13px; color: var(--text); }
+
+  .btn-search {
+    width: 100%; padding: 12px; border-radius: 8px;
+    background: var(--green); color: white; border: none;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s; letter-spacing: 0.02em;
+  }
+  .btn-search:hover { background: #17835f; }
+
+  .results { margin-top: 20px; }
+  .result-count { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .result-count strong { color: var(--green); }
+  .result-list { display: flex; flex-direction: column; gap: 10px; }
+  .result-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: white; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 16px; gap: 12px;
+  }
+  .result-info {}
+  .result-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .result-loc { font-size: 12px; color: var(--muted); }
+  .result-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--green-light); color: var(--green-dark); }
+  .result-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-sm {
+    padding: 5px 10px; border-radius: 6px; font-size: 12px; font-family: 'Inter', sans-serif;
+    text-decoration: none; border: 1px solid var(--border); background: white; color: var(--muted);
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .btn-sm:hover { border-color: var(--green); color: var(--green); }
+  .btn-sm.green { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+  .btn-sm.green:hover { background: #bbf7d0; }
+
+  /* ── CONTACT WIDGET ── */
+  .contact-bar {
+    background: var(--green); border-radius: var(--radius);
+    padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  }
+  .contact-label { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: white; flex: 1; min-width: 150px; }
+  .contact-label span { display: block; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 400; opacity: 0.8; margin-top: 2px; }
+  .contact-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cbtn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px; border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    text-decoration: none; cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .cbtn-wa { background: white; color: #166534; }
+  .cbtn-wa:hover { background: #f0fdf4; }
+  .cbtn-mail { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  .cbtn-mail:hover { background: rgba(255,255,255,0.25); }
+  .cbtn-call { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  .cbtn-call:hover { background: rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+
+<!-- WIDGET 3: BUSCADOR -->
+<div class="search-hero">
+  <div class="search-title">Find your next stop</div>
+  <div class="search-sub">Search across 34 ARCA members in 9 countries</div>
+
+  <div class="search-grid">
+    <div class="field">
+      <label>Country</label>
+      <select id="s-country">
+        <option value="">All countries</option>
+        <option>Peru</option><option>Colombia</option><option>Argentina</option>
+        <option>Chile</option><option>Ecuador</option><option>Brazil</option>
+        <option>Bolivia</option><option>Paraguay</option><option>Uruguay</option><option>Panama</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Vehicle type</label>
+      <select id="s-vehicle">
+        <option value="">Any vehicle</option>
+        <option value="camping">Motorhome / RV</option>
+        <option value="camping">Motorcycle</option>
+        <option value="lodging">Car traveler</option>
+        <option value="lodging">Backpacker</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="field" style="margin-bottom:16px">
+    <label>Services needed</label>
+    <div class="services-grid" style="margin-top:8px">
+      <label class="svc-check"><input type="checkbox" value="camping"> <span>Camping</span></label>
+      <label class="svc-check"><input type="checkbox" value="lodging"> <span>Rooms / Lodging</span></label>
+      <label class="svc-check"><input type="checkbox" value="storage"> <span>Vehicle storage</span></label>
+      <label class="svc-check"><input type="checkbox" value="storage"> <span>TIP suspension</span></label>
+      <label class="svc-check"><input type="checkbox" value="tours"> <span>Tours</span></label>
+      <label class="svc-check"><input type="checkbox" value="camping"> <span>Overland stop</span></label>
+    </div>
+  </div>
+
+  <button class="btn-search" onclick="doSearch()">Search members &rarr;</button>
+
+  <div class="results" id="results" style="display:none">
+    <div class="result-count" id="rcount"></div>
+    <div class="result-list" id="rlist"></div>
+  </div>
+</div>
+
+<!-- WIDGET 4: CONTACTO GLOBAL -->
+<div class="contact-bar">
+  <div class="contact-label">
+    ARCA Network — worldwide contact
+    <span>Available in English, Spanish, French & German</span>
+  </div>
+  <div class="contact-btns">
+    <a class="cbtn cbtn-wa" href="https://wa.me/51941483585" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.544 5.876L0 24l6.317-1.522A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.68-.498-5.224-1.37l-.374-.22-3.748.903.938-3.65-.244-.386A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      WhatsApp
+    </a>
+    <a class="cbtn cbtn-mail" href="mailto:gerenteeltipviajero@gmail.com">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+      Email
+    </a>
+    <a class="cbtn cbtn-call" href="tel:+51941483585">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.18 6.18l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      +51 941 483 585
+    </a>
+  </div>
+</div>
+
+<script>
+const camps = [
+  {name:"El Tip Viajero",country:"Peru",city:"Lima",tags:["Urban camping","Storage","TIP","SOAT"],wa:"51941483585",types:["camping","lodging","storage"]},
+  {name:"Finca Sommerwind",country:"Ecuador",city:"Ibarra",tags:["Camping"],wa:"",types:["camping","lodging"]},
+  {name:"Finca La Bonanza — Chez Kika",country:"Colombia",city:"Silvia",tags:["Camping","Hostal"],wa:"",types:["camping","lodging"]},
+  {name:"Ecocamp Huacachina",country:"Peru",city:"Ica",tags:["Eco camping"],wa:"",types:["camping"]},
+  {name:"PatagonFox Camping Express",country:"Chile",city:"Santiago",tags:["Camping"],wa:"",types:["camping"]},
+  {name:"La Casita — Overlander Lodging",country:"Brazil",city:"Navegantes",tags:["Lodging","Camping"],wa:"5547992414009",types:["camping","lodging"]},
+  {name:"The Overland Embassy",country:"Panama",city:"Panama City",tags:["Shipping","Repairs"],wa:"",types:["camping"]},
+  {name:"Hotel Conzulado 96 — Colán Beach",country:"Peru",city:"Colán, Piura",tags:["Lodging","Beach"],wa:"51941483585",types:["camping","lodging"]},
+  {name:"Tourism Dios es Amor",country:"Peru",city:"Aguaytia",tags:["Tours","Adventure"],wa:"",types:["tours","lodging"]},
+  {name:"Cabañas Del Sauce",country:"Argentina",city:"Paraná",tags:["Lodging","Camping"],wa:"5493435724178",types:["camping","lodging"]},
+  {name:"Peru Titicaca & Connections",country:"Peru",city:"Puno",tags:["Tours"],wa:"",types:["tours"]},
+  {name:"Finca Mi Casita",country:"Colombia",city:"Armenia, Quindío",tags:["Camping","Lodging"],wa:"",types:["camping","lodging"]},
+  {name:"Camping Las Colinas",country:"Bolivia",city:"La Paz",tags:["Camping","Lodging"],wa:"59168125858",types:["camping","lodging"]},
+  {name:"CamperPark PatagonFox Ralun",country:"Chile",city:"Ralún",tags:["Camping"],wa:"",types:["camping"]},
+  {name:"Zapparancho",country:"Argentina",city:"Buenos Aires area",tags:["Lodging","Camping"],wa:"",types:["camping","lodging"]},
+  {name:"Finca El Manantial",country:"Colombia",city:"Bolívar",tags:["Camping","Lodging"],wa:"573153859820",types:["camping","lodging"]},
+  {name:"Fazendinha Eros",country:"Brazil",city:"Boa Vista area",tags:["Camping"],wa:"",types:["camping"]},
+  {name:"Sierra Alisos Hotel de Campo",country:"Ecuador",city:"Mindo area",tags:["Hotel","Camping"],wa:"",types:["camping","lodging"]},
+  {name:"Neumanns Place",country:"Argentina",city:"Salta",tags:["Lodging"],wa:"",types:["lodging"]},
+  {name:"Andean Roads Motorhome Rentals",country:"Argentina",city:"Buenos Aires",tags:["Rentals"],wa:"",types:["camping"]},
+  {name:"Posada Marina Bella",country:"Argentina",city:"Chubut",tags:["Lodging"],wa:"5492976244742",types:["lodging"]},
+  {name:"Resort Hotel Los Ceibos",country:"Bolivia",city:"Tarija",tags:["Hotel"],wa:"",types:["lodging"]},
+  {name:"Camping Ráquira El Molino",country:"Colombia",city:"Ráquira",tags:["Camping","Restaurant"],wa:"",types:["camping","lodging"]},
+  {name:"Camping El Paraíso Verde",country:"Paraguay",city:"",tags:["Camping"],wa:"595976394880",types:["camping"]},
+  {name:"Refugio de Ruta",country:"Uruguay",city:"",tags:["Camping","Lodging"],wa:"",types:["camping","lodging"]},
+  {name:"Hotel Campestre Lagos de Venecia",country:"Colombia",city:"Pereira area",tags:["Glamping","Camping"],wa:"",types:["camping","lodging"]},
+  {name:"Camping and Rooms — Pucallpa",country:"Peru",city:"Pucallpa",tags:["Camping","Rooms"],wa:"51941483585",types:["camping","lodging"]},
+  {name:"Swiss Wassi",country:"Peru",city:"Tumbes area",tags:["Camping","Rooms"],wa:"",types:["camping","lodging"]},
+  {name:"Hostal Andenes del Sol",country:"Peru",city:"Huaraz",tags:["Hostal","Tours"],wa:"",types:["lodging","tours"]},
+  {name:"Hospedaje Cusco Family — ETV",country:"Peru",city:"Cusco",tags:["Apartment"],wa:"51941483585",types:["lodging"]},
+  {name:"Caleta Vidal — Overlander Camping",country:"Peru",city:"Caleta Vidal",tags:["Camping"],wa:"51941483585",types:["camping","lodging"]},
+  {name:"Villamargarita Motorhome Campsite",country:"Colombia",city:"Nariño",tags:["Camping"],wa:"",types:["camping"]},
+  {name:"Padua Hotel Glamping and Camping",country:"Colombia",city:"Nariño",tags:["Glamping","Camping"],wa:"573146950049",types:["camping","lodging"]}
+];
+
+function doSearch() {
+  const country = document.getElementById('s-country').value;
+  const vehicle = document.getElementById('s-vehicle').value;
+  const checked = [...document.querySelectorAll('.svc-check input:checked')].map(i=>i.value);
+
+  let filtered = camps.filter(c => {
+    if (country && c.country !== country) return false;
+    if (vehicle && !c.types.includes(vehicle)) return false;
+    if (checked.length && !checked.some(t => c.types.includes(t))) return false;
+    return true;
+  });
+
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+  document.getElementById('rcount').innerHTML = `Found <strong>${filtered.length}</strong> member${filtered.length!==1?'s':''}`;
+  document.getElementById('rlist').innerHTML = filtered.map(c => `
+    <div class="result-item">
+      <div class="result-info">
+        <div class="result-name">${c.name}</div>
+        <div class="result-loc">${c.country}${c.city?' · '+c.city:''}</div>
+        <div class="result-tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="result-actions">
+        ${c.wa?`<a class="btn-sm green" href="https://wa.me/${c.wa.replace(/\D/g,'')}" target="_blank">WhatsApp</a>`:''}
+      </div>
+    </div>
+  `).join('') || '<div style="font-size:13px;color:#6b7280;padding:12px 0">No members found. Try broader filters.</div>';
+}
+</script>
+</body>
+</html>
