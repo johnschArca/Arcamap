@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCA Network Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@3.0.2/Control.FullScreen.css"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #F7F1E8;
+    --dark:   #1C0D06;
+    --text:   #2A1505;
+    --muted:  #6B4A30;
+    --border: #D4B898;
+    --red:    #C0392B;
+    --red-dk: #7B241C;
+    --green:  #1D6B50;
+    --f-disp: 'Cormorant Garamond', serif;
+    --f-body: 'DM Sans', sans-serif;
+  }
+
+  html, body { height: 100%; font-family: var(--f-body); background: var(--bg); }
+
+  /* ── HEADER ── */
+  .map-header {
+    background: var(--dark);
+    padding: .9rem 1.25rem;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+  }
+  .map-logo {
+    font-family: var(--f-disp); font-size: 1.3rem; font-weight: 600; color: #F5EDD5;
+    letter-spacing: .02em;
+  }
+  .map-logo em { font-style: italic; color: #D4A86A; }
+  .map-stats {
+    display: flex; gap: 1.25rem;
+  }
+  .mstat { text-align: center; }
+  .mstat-n { font-family: var(--f-disp); font-size: 1.2rem; font-weight: 400; color: #F5EDD5; line-height: 1; }
+  .mstat-l { font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,237,213,.38); margin-top: 1px; }
+
+  /* ── MAP ── */
+  #map {
+    width: 100%;
+    height: calc(100vh - 108px);
+    min-height: 400px;
+  }
+
+  /* ── FOOTER ── */
+  .map-footer {
+    background: var(--dark); border-top: 1px solid rgba(255,255,255,.06);
+    padding: .55rem 1.25rem;
+    display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .leg { display: flex; align-items: center; gap: .45rem; }
+  .leg-pin {
+    width: 12px; height: 16px; border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg); flex-shrink: 0;
+  }
+  .leg-pin.red    { background: var(--red); }
+  .leg-pin.gold   { background: #D4A86A; }
+  .leg-pin.green  { background: var(--green); }
+  .leg-lbl { font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; color: rgba(245,237,213,.4); }
+
+  /* ── POPUP ── */
+  .leaflet-popup-content-wrapper {
+    border-radius: 3px !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 6px 24px rgba(28,13,6,.18) !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+  .leaflet-popup-content { margin: 0 !important; width: auto !important; }
+  .leaflet-popup-tip-container { margin-top: -1px; }
+
+  .popup-inner { font-family: var(--f-body); padding: 8px 12px; }
+  .popup-name {
+    font-family: var(--f-disp); font-size: .95rem; font-weight: 600;
+    color: var(--text); line-height: 1.25; margin-bottom: 2px;
+  }
+  .popup-loc { font-size: .7rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="map-header">
+  <div class="map-logo">ARCA <em>Network</em></div>
+  <div class="map-stats">
+    <div class="mstat"><div class="mstat-n">37</div><div class="mstat-l">Members</div></div>
+    <div class="mstat"><div class="mstat-n">10</div><div class="mstat-l">Countries</div></div>
+    <div class="mstat"><div class="mstat-n">2</div><div class="mstat-l">Continents</div></div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<div class="map-footer">
+  <div class="leg"><div class="leg-pin green"></div><span class="leg-lbl">Founder</span></div>
+  <div class="leg"><div class="leg-pin gold"></div><span class="leg-lbl">Country leader</span></div>
+  <div class="leg"><div class="leg-pin red"></div><span class="leg-lbl">Member</span></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.fullscreen@3.0.2/Control.FullScreen.js"></script>
+<script>
+// ── EXACT GPS COORDINATES FROM KMZ FILE ──
+const camps = [
+  {
+    name: "El Tip Viajero",
+    fullname: "El TIP VIAJERO — Urban Campsite & Storage",
+    country: "Peru", city: "Lima",
+    lat: -12.0157343, lon: -77.0763791,
+    role: "founder",
+    tags: ["Urban camping","Storage","TIP","Rooms","SOAT","Legal 24/7"],
+    wa: "51941483585"
+  },
+  {
+    name: "Finca Sommerwind",
+    country: "Ecuador", city: "Ibarra",
+    lat: 0.38039, lon: -78.0895,
+    role: "leader",
+    tags: ["Camping","Overlander"],
+    wa: "593939371170"
+  },
+  {
+    name: "Finca La Bonanza — Chez Kika",
+    country: "Colombia", city: "Silvia",
+    lat: 2.6136105, lon: -76.4647675,
+    role: "leader",
+    tags: ["Hostal","Camping"],
+    wa: "573166226221"
+  },
+  {
+    name: "Ecocamp Huacachina",
+    country: "Peru", city: "Ica",
+    lat: -14.0889552, lon: -75.7638388,
+    role: "member",
+    tags: ["Eco camping"],
+    wa: "51956000487"
+  },
+  {
+    name: "PatagonFox Camping Express",
+    country: "Chile", city: "Santiago",
+    lat: -33.3834158, lon: -70.8558114,
+    role: "leader",
+    tags: ["Camping","Overland"],
+    wa: ""
+  },
+  {
+    name: "La Casita — Overlander Lodging",
+    country: "Brazil", city: "Navegantes",
+    lat: -26.8573945, lon: -48.6475938,
+    role: "leader",
+    tags: ["Lodging","Camping"],
+    wa: "5547992414009"
+  },
+  {
+    name: "The Overland Embassy",
+    country: "Panama", city: "Panama City",
+    lat: 9.0144558, lon: -79.4868234,
+    role: "leader",
+    tags: ["Shipping","Repairs","Camping"],
+    wa: ""
+  },
+  {
+    name: "Hotel Conzulado 96 — Colán Beach",
+    country: "Peru", city: "Colán, Piura",
+    lat: -5.003591, lon: -81.0674188,
+    role: "member",
+    tags: ["Lodging","Beach camping","Airbnb"],
+    wa: "51941483585"
+  },
+  {
+    name: "Tourism Dios es Amor",
+    country: "Peru", city: "Aguaytia",
+    lat: -9.0385612, lon: -75.5091674,
+    role: "member",
+    tags: ["Tours","Adventure","Fishing"],
+    wa: "51941483585"
+  },
+  {
+    name: "Cabañas Del Sauce",
+    country: "Argentina", city: "Paraná",
+    lat: -31.7443349, lon: -60.3556697,
+    role: "leader",
+    tags: ["Lodging","Camping"],
+    wa: "5493435724178"
+  },
+  {
+    name: "Peru Titicaca & Connections",
+    country: "Peru", city: "Puno",
+    lat: -15.8411759, lon: -70.0281277,
+    role: "member",
+    tags: ["Tours","Titicaca"],
+    wa: ""
+  },
+  {
+    name: "Finca Mi Casita",
+    country: "Colombia", city: "Armenia, Quindío",
+    lat: 4.5245625, lon: -75.7454375,
+    role: "member",
+    tags: ["Camping","Lodging"],
+    wa: "573142829022"
+  },
+  {
+    name: "Camping Las Colinas",
+    country: "Bolivia", city: "La Paz",
+    lat: -16.5521913841325, lon: -68.0660362880251,
+    role: "member",
+    tags: ["Camping","Lodging"],
+    wa: "59168125858"
+  },
+  {
+    name: "CamperPark PatagonFox Ralun",
+    country: "Chile", city: "Ralún",
+    lat: -41.366514, lon: -72.3470034,
+    role: "member",
+    tags: ["Camping","Patagonia"],
+    wa: ""
+  },
+  {
+    name: "Zapparancho",
+    country: "Argentina", city: "Buenos Aires area",
+    lat: -34.8189744, lon: -58.9374743,
+    role: "member",
+    tags: ["Lodging","Camping"],
+    wa: ""
+  },
+  {
+    name: "Finca El Manantial — Vida Campestre",
+    country: "Colombia", city: "Bolívar",
+    lat: 10.29834, lon: -75.43417,
+    role: "member",
+    tags: ["Camping","Lodging"],
+    wa: "573153859820"
+  },
+  {
+    name: "Fazendinha Eros — Chácara",
+    country: "Brazil", city: "Boa Vista area",
+    lat: 2.8177785, lon: -60.5951389,
+    role: "member",
+    tags: ["Camping"],
+    wa: ""
+  },
+  {
+    name: "Sierra Alisos Hotel de Campo",
+    country: "Ecuador", city: "Mindo area",
+    lat: -0.4027127, lon: -78.5758151,
+    role: "member",
+    tags: ["Hotel","Camping"],
+    wa: ""
+  },
+  {
+    name: "Neumanns Place",
+    country: "Argentina", city: "Salta",
+    lat: -24.6993639, lon: -65.4842367,
+    role: "member",
+    tags: ["Lodging"],
+    wa: "5493875730111"
+  },
+  {
+    name: "Andean Roads Motorhome Rentals",
+    country: "Argentina", city: "Buenos Aires",
+    lat: -34.4981419, lon: -58.7228595,
+    role: "member",
+    tags: ["Motorhome rentals"],
+    wa: ""
+  },
+  {
+    name: "Posada Marina Bella Rada Tilli",
+    country: "Argentina", city: "Chubut",
+    lat: -45.9279443, lon: -67.5596818,
+    role: "member",
+    tags: ["Lodging"],
+    wa: "5492976244742"
+  },
+  {
+    name: "Camping Ráquira El Molino",
+    country: "Colombia", city: "Ráquira",
+    lat: 5.5462077, lon: -73.6370794,
+    role: "member",
+    tags: ["Camping","Restaurant","Rooms"],
+    wa: ""
+  },
+  {
+    name: "Camping El Paraiso Verde",
+    country: "Paraguay", city: "",
+    lat: -27.1612, lon: -56.2426,
+    role: "member",
+    tags: ["Camping"],
+    wa: "595976394880"
+  },
+  {
+    name: "Hotel Campestre Lagos de Venecia",
+    country: "Colombia", city: "Pereira area",
+    lat: 4.8899535, lon: -75.6227646,
+    role: "member",
+    tags: ["Glamping","Camping","Hotel","Chalet"],
+    wa: ""
+  },
+  {
+    name: "Camping and Rooms — Pucallpa",
+    country: "Peru", city: "Pucallpa",
+    lat: -8.3515577, lon: -74.5775873,
+    role: "member",
+    tags: ["Camping","Rooms"],
+    wa: "51941483585"
+  },
+  {
+    name: "Swiss Wassi",
+    country: "Peru", city: "Tumbes area",
+    lat: -3.7250946, lon: -80.7600991,
+    role: "member",
+    tags: ["Camping","Rooms"],
+    wa: ""
+  },
+  {
+    name: "Hostal Andenes del Sol",
+    country: "Peru", city: "Cusco area",
+    lat: -13.5122634, lon: -71.9835162,
+    role: "member",
+    tags: ["Hostal","Tours"],
+    wa: ""
+  },
+  {
+    name: "Hospedaje Cusco Family — El Tip Viajero",
+    country: "Peru", city: "Cusco",
+    lat: -13.5192691, lon: -71.9602147,
+    role: "member",
+    tags: ["Apartment","Airbnb"],
+    wa: "51941483585"
+  },
+  {
+    name: "Caleta Vidal — Overlander Camping (ETV)",
+    country: "Peru", city: "Caleta Vidal",
+    lat: -10.8500329, lon: -77.6929231,
+    role: "member",
+    tags: ["Camping","Rooms","Panamericana"],
+    wa: "51941483585"
+  },
+  {
+    name: "Villamargarita Motorhome Campsite",
+    country: "Colombia", city: "Nariño",
+    lat: 1.2076275, lon: -77.2170981,
+    role: "member",
+    tags: ["Camping","Apiterapia"],
+    wa: ""
+  },
+  {
+    name: "Padua Hotel Glamping and Camping",
+    country: "Colombia", city: "Nariño",
+    lat: 1.3439947, lon: -77.2839997,
+    role: "member",
+    tags: ["Glamping","Camping","Hotel"],
+    wa: "573146950049"
+  },
+  {
+    name: "Fundo Pampas del Rosario",
+    country: "Peru", city: "Ancash",
+    lat: -9.48929, lon: -78.24293,
+    role: "member",
+    tags: ["Camping","Lodging"],
+    wa: "51996280620"
+  },
+  {
+    name: "La Casa De Lili",
+    country: "Peru", city: "Ancash",
+    lat: -9.2879894, lon: -77.6322454,
+    role: "member",
+    tags: ["Rooms","Lodging"],
+    wa: ""
+  },
+  {
+    name: "Fundo Santa María",
+    country: "Peru", city: "Cajamarca area",
+    lat: -7.1575, lon: -78.50652,
+    role: "member",
+    tags: ["Camping","Lodging"],
+    wa: "51980682363"
+  },
+  {
+    name: "Camper Site Mesa de los Santos",
+    country: "Colombia", city: "Santander",
+    lat: 6.8577902, lon: -73.0647985,
+    role: "member",
+    tags: ["Camping","Overland"],
+    wa: ""
+  },
+  {
+    name: "Hotel & Camping La Cumbre Del Macizo",
+    country: "Colombia", city: "Macizo Colombiano",
+    lat: 1.8899319, lon: -76.284248,
+    role: "member",
+    tags: ["Hotel","Camping"],
+    wa: ""
+  }
+];
+
+// ── PIN COLORS ──
+const pinColor = { founder: '#1D6B50', leader: '#D4A86A', member: '#C0392B' };
+const pinBorder = { founder: '#0D3D2C', leader: '#8B6914', member: '#7B241C' };
+
+// ── MAP INIT — using ESRI tiles (no referer restriction) ──
+const map = L.map('map', {
+  scrollWheelZoom: true,
+  zoomControl: true,
+  tap: true,
+  fullscreenControl: true,
+  fullscreenControlOptions: { position: 'topleft', title: 'Full screen', titleCancel: 'Exit full screen' }
+}).setView([-10, -68], 3);
+
+// ESRI World Street Map — works without referer restrictions
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © Esri',
+  maxZoom: 19
+}).addTo(map);
+
+// ── CUSTOM PIN ICON ──
+function makeIcon(role) {
+  const c = pinColor[role];
+  const b = pinBorder[role];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="20" viewBox="0 0 28 40">
+    <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26S28 23.333 28 14C28 6.268 21.732 0 14 0z"
+      fill="${c}" stroke="${b}" stroke-width="2"/>
+    <circle cx="14" cy="14" r="5" fill="white" opacity="0.85"/>
+  </svg>`;
+  return L.divIcon({
+    className: '',
+    html: svg,
+    iconSize: [14, 20],
+    iconAnchor: [7, 20],
+    popupAnchor: [0, -22]
+  });
+}
+
+// ── PLACE MARKERS ──
+camps.forEach(c => {
+  const icon = makeIcon(c.role);
+
+  const roleLabel = c.role === 'founder' ? 'ARCA Founder'
+                  : c.role === 'leader'  ? 'Country Leader'
+                  : 'Member';
+
+  const popup = `
+    <div class="popup-inner">
+      <div class="popup-name">${c.name}</div>
+      <div class="popup-loc">${c.country}${c.city ? ' · ' + c.city : ''}</div>
+    </div>`;
+
+  L.marker([c.lat, c.lon], { icon }).addTo(map).bindPopup(popup, { maxWidth: 280 });
+});
+
+// ── RESPONSIVE: fit map on resize ──
+window.addEventListener('resize', () => map.invalidateSize());
+</script>
+</body>
+</html>
