@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCA Network Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #F7F1E8;
+    --dark:   #1C0D06;
+    --text:   #2A1505;
+    --muted:  #6B4A30;
+    --border: #D4B898;
+    --red:    #C0392B;
+    --red-dk: #7B241C;
+    --green:  #1D6B50;
+    --f-disp: 'Cormorant Garamond', serif;
+    --f-body: 'DM Sans', sans-serif;
+  }
+  html, body { height: 100%; font-family: var(--f-body); background: var(--bg); }
+
+  /* ── HEADER ── */
+  .map-header {
+    background: var(--dark); padding: .9rem 1.25rem;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+  }
+  .map-logo { font-family: var(--f-disp); font-size: 1.3rem; font-weight: 600; color: #F5EDD5; }
+  .map-logo em { font-style: italic; color: #D4A86A; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .map-stats { display: flex; gap: 1.25rem; }
+  .mstat { text-align: center; }
+  .mstat-n { font-family: var(--f-disp); font-size: 1.2rem; color: #F5EDD5; line-height: 1; }
+  .mstat-l { font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,237,213,.38); margin-top: 1px; }
+
+  /* ── SHARE BUTTON ── */
+  .btn-share {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .45rem 1rem; border-radius: 2px;
+    background: #25D366; color: white;
+    font-family: var(--f-body); font-size: .75rem; font-weight: 500;
+    text-decoration: none; border: none; cursor: pointer;
+    transition: background .15s; white-space: nowrap;
+  }
+  .btn-share:hover { background: #1da851; }
+
+  /* ── MAP ── */
+  #map { width: 100%; height: calc(100vh - 108px); min-height: 400px; }
+
+  /* ── CUSTOM MAP BUTTONS ── */
+  .map-btn-group {
+    position: absolute; top: 10px; right: 10px; z-index: 1000;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .map-ctrl-btn {
+    width: 34px; height: 34px; border-radius: 3px;
+    background: white; border: 1px solid rgba(0,0,0,.2);
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #333; transition: all .15s;
+    font-size: 16px;
+  }
+  .map-ctrl-btn:hover { background: #f4f4f4; border-color: rgba(0,0,0,.35); }
+  .map-ctrl-btn.active { background: #1D6B50; color: white; border-color: #1D6B50; }
+  .map-ctrl-btn svg { pointer-events: none; }
+
+  /* ── FOOTER ── */
+  .map-footer {
+    background: var(--dark); border-top: 1px solid rgba(255,255,255,.06);
+    padding: .55rem 1.25rem;
+    display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .leg { display: flex; align-items: center; gap: .45rem; }
+  .leg-pin { width: 12px; height: 16px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); flex-shrink: 0; }
+  .leg-pin.red   { background: var(--red); }
+  .leg-pin.gold  { background: #D4A86A; }
+  .leg-pin.green { background: var(--green); }
+  .leg-lbl { font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; color: rgba(245,237,213,.4); }
+
+  /* ── LOADING ── */
+  .loading-overlay {
+    position: fixed; inset: 0; background: var(--dark);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 9999; gap: 1rem;
+  }
+  .loading-overlay.hidden { display: none; }
+  .loading-text { font-family: var(--f-disp); font-size: 1.4rem; color: #F5EDD5; font-style: italic; }
+  .loading-sub { font-size: .75rem; color: rgba(245,237,213,.35); letter-spacing: .1em; text-transform: uppercase; }
+  .spinner {
+    width: 32px; height: 32px; border: 2px solid rgba(245,237,213,.15);
+    border-top-color: #D4A86A; border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── POPUP ── */
+  .leaflet-popup-content-wrapper {
+    border-radius: 3px !important; border: 1px solid var(--border) !important;
+    box-shadow: 0 6px 24px rgba(28,13,6,.18) !important;
+    padding: 0 !important; overflow: hidden;
+  }
+  .leaflet-popup-content { margin: 0 !important; width: auto !important; }
+  .popup-inner { font-family: var(--f-body); padding: 12px 14px; min-width: 190px; max-width: 250px; }
+  .popup-role {
+    font-size: .6rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .popup-role.founder { color: var(--green); }
+  .popup-role.leader  { color: #B07C14; }
+  .popup-role.member  { color: var(--muted); }
+  .popup-name { font-family: var(--f-disp); font-size: 1rem; font-weight: 600; color: var(--text); line-height: 1.25; margin-bottom: 2px; }
+  .popup-loc  { font-size: .7rem; color: var(--muted); margin-bottom: 8px; }
+  .popup-services { margin-bottom: 10px; }
+  .popup-svc-label { font-size: .62rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .popup-tags { display: flex; gap: 3px; flex-wrap: wrap; }
+  .popup-tag { font-size: .62rem; padding: 1px 6px; border-radius: 2px; background: #F7F1E8; color: var(--muted); border: 1px solid var(--border); }
+  .popup-wa {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px; background: #25D366; color: white;
+    border-radius: 2px; font-size: .75rem; font-weight: 500;
+    text-decoration: none; transition: background .15s; width: 100%;
+    justify-content: center; margin-top: 2px;
+  }
+  .popup-wa:hover { background: #1da851; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">ARCA Network</div>
+  <div class="loading-sub">Loading members…</div>
+</div>
+
+<!-- HEADER -->
+<div class="map-header">
+  <div class="map-logo">ARCA <em>Network</em></div>
+  <div class="header-right">
+    <div class="map-stats">
+      <div class="mstat"><div class="mstat-n" id="stat-members">—</div><div class="mstat-l">Members</div></div>
+      <div class="mstat"><div class="mstat-n">10</div><div class="mstat-l">Countries</div></div>
+    </div>
+    <a class="btn-share" id="share-btn" href="#" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.544 5.876L0 24l6.317-1.522A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.68-.498-5.224-1.37l-.374-.22-3.748.903.938-3.65-.244-.386A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Share on WhatsApp
+    </a>
+  </div>
+</div>
+
+<div id="map">
+  <div class="map-btn-group">
+    <!-- Fullscreen -->
+    <button class="map-ctrl-btn" id="btn-fullscreen" title="Pantalla completa" onclick="toggleFullscreen()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+      </svg>
+    </button>
+    <!-- My location -->
+    <button class="map-ctrl-btn" id="btn-locate" title="Mi ubicación" onclick="locateMe()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+        <circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div class="map-footer">
+  <div class="leg"><div class="leg-pin green"></div><span class="leg-lbl">Founder</span></div>
+  <div class="leg"><div class="leg-pin gold"></div><span class="leg-lbl">Country leader</span></div>
+  <div class="leg"><div class="leg-pin red"></div><span class="leg-lbl">Member</span></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+//  PASO 1: REEMPLAZA ESTA URL CON TU GOOGLE SHEET ID
+//  Instrucciones abajo en el archivo
+// ══════════════════════════════════════════════════════
+const SHEET_ID = 'TU_SHEET_ID_AQUI';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+// ── MAP INIT ──
+const map = L.map('map', {
+  scrollWheelZoom: true,
+  zoomControl: true,
+  tap: true
+}).setView([-10, -68], 3);
+
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © Esri', maxZoom: 19
+}).addTo(map);
+
+// ── PIN COLORS ──
+const pinColor  = { founder: '#1D6B50', leader: '#D4A86A', member: '#C0392B' };
+const pinBorder = { founder: '#0D3D2C', leader: '#8B6914', member: '#7B241C' };
+
+function makeIcon(role) {
+  const c = pinColor[role] || pinColor.member;
+  const b = pinBorder[role] || pinBorder.member;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="20" viewBox="0 0 28 40">
+    <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26S28 23.333 28 14C28 6.268 21.732 0 14 0z"
+      fill="${c}" stroke="${b}" stroke-width="2"/>
+    <circle cx="14" cy="14" r="5" fill="white" opacity="0.85"/>
+  </svg>`;
+  return L.divIcon({ className:'', html:svg, iconSize:[14,20], iconAnchor:[7,20], popupAnchor:[0,-22] });
+}
+
+// ── LOAD DATA FROM GOOGLE SHEETS ──
+function loadFromSheets() {
+  fetch(SHEET_URL)
+    .then(r => r.text())
+    .then(text => {
+      // Google wraps response in /*O_o*/  google.visualization.Query.setResponse({...});
+      const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+      const rows = json.table.rows;
+      const cols = json.table.cols.map(c => c.label.toLowerCase().trim());
+
+      const camps = rows.map(row => {
+        const get = (colName) => {
+          const i = cols.indexOf(colName);
+          return i >= 0 && row.c[i] ? String(row.c[i].v || '').trim() : '';
+        };
+        return {
+          name:     get('name'),
+          country:  get('country'),
+          city:     get('city'),
+          lat:      parseFloat(get('lat')),
+          lon:      parseFloat(get('lon')),
+          role:     get('role') || 'member',
+          services: get('services'),
+          wa:       get('whatsapp').replace(/\D/g, ''),
+        };
+      }).filter(c => !isNaN(c.lat) && !isNaN(c.lon) && c.name);
+
+      placePins(camps);
+      document.getElementById('stat-members').textContent = camps.length;
+      document.getElementById('loading').classList.add('hidden');
+    })
+    .catch(err => {
+      console.warn('Sheets failed, loading built-in data:', err);
+      loadFallback();
+    });
+}
+
+// ── PLACE PINS ON MAP ──
+function placePins(camps) {
+  camps.forEach(c => {
+    const icon = makeIcon(c.role);
+    const roleLabel = c.role === 'founder' ? 'ARCA Founder' : c.role === 'leader' ? 'Country Leader' : 'Member';
+
+    const servicesTags = c.services
+      ? c.services.split(',').map(s => `<span class="popup-tag">${s.trim()}</span>`).join('')
+      : '';
+
+    const waBtn = c.wa
+      ? `<a class="popup-wa" href="https://wa.me/${c.wa}" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.544 5.876L0 24l6.317-1.522A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.68-.498-5.224-1.37l-.374-.22-3.748.903.938-3.65-.244-.386A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          WhatsApp
+         </a>`
+      : '';
+
+    const popup = `<div class="popup-inner">
+      <div class="popup-role ${c.role}">${roleLabel}</div>
+      <div class="popup-name">${c.name}</div>
+      <div class="popup-loc">${c.country}${c.city ? ' · ' + c.city : ''}</div>
+      ${servicesTags ? `<div class="popup-services"><div class="popup-svc-label">Services</div><div class="popup-tags">${servicesTags}</div></div>` : ''}
+      ${waBtn}
+    </div>`;
+
+    L.marker([c.lat, c.lon], { icon }).addTo(map).bindPopup(popup, { maxWidth: 260 });
+  });
+}
+
+// ── FALLBACK: built-in data if Sheets not configured ──
+function loadFallback() {
+  const camps = [
+    {name:"El Tip Viajero",country:"Peru",city:"Lima",lat:-12.0157343,lon:-77.0763791,role:"founder",services:"Urban camping,Storage,TIP,Rooms,SOAT,Legal 24/7",wa:"51941483585"},
+    {name:"Finca Sommerwind",country:"Ecuador",city:"Ibarra",lat:0.38039,lon:-78.0895,role:"leader",services:"Camping,Overlander",wa:"593939371170"},
+    {name:"Finca La Bonanza — Chez Kika",country:"Colombia",city:"Silvia",lat:2.6136105,lon:-76.4647675,role:"leader",services:"Hostal,Camping",wa:"573166226221"},
+    {name:"Ecocamp Huacachina",country:"Peru",city:"Ica",lat:-14.0889552,lon:-75.7638388,role:"member",services:"Eco camping",wa:"51956000487"},
+    {name:"PatagonFox Camping Express",country:"Chile",city:"Santiago",lat:-33.3834158,lon:-70.8558114,role:"leader",services:"Camping,Overland",wa:""},
+    {name:"La Casita — Overlander Lodging",country:"Brazil",city:"Navegantes",lat:-26.8573945,lon:-48.6475938,role:"leader",services:"Lodging,Camping",wa:"5547992414009"},
+    {name:"The Overland Embassy",country:"Panama",city:"Panama City",lat:9.0144558,lon:-79.4868234,role:"leader",services:"Shipping,Repairs,Camping",wa:""},
+    {name:"Hotel Conzulado 96 — Colán Beach",country:"Peru",city:"Colán",lat:-5.003591,lon:-81.0674188,role:"member",services:"Lodging,Beach camping,Airbnb",wa:"51941483585"},
+    {name:"Tourism Dios es Amor",country:"Peru",city:"Aguaytia",lat:-9.0385612,lon:-75.5091674,role:"member",services:"Tours,Adventure,Fishing",wa:"51941483585"},
+    {name:"Cabañas Del Sauce",country:"Argentina",city:"Paraná",lat:-31.7443349,lon:-60.3556697,role:"leader",services:"Lodging,Camping",wa:"5493435724178"},
+    {name:"Peru Titicaca & Connections",country:"Peru",city:"Puno",lat:-15.8411759,lon:-70.0281277,role:"member",services:"Tours,Titicaca",wa:""},
+    {name:"Finca Mi Casita",country:"Colombia",city:"Armenia",lat:4.5245625,lon:-75.7454375,role:"member",services:"Camping,Lodging",wa:"573142829022"},
+    {name:"Camping Las Colinas",country:"Bolivia",city:"La Paz",lat:-16.5521913,lon:-68.0660362,role:"member",services:"Camping,Lodging",wa:"59168125858"},
+    {name:"CamperPark PatagonFox Ralun",country:"Chile",city:"Ralún",lat:-41.366514,lon:-72.3470034,role:"member",services:"Camping,Patagonia",wa:""},
+    {name:"Zapparancho",country:"Argentina",city:"Buenos Aires",lat:-34.8189744,lon:-58.9374743,role:"member",services:"Lodging,Camping",wa:""},
+    {name:"Finca El Manantial",country:"Colombia",city:"Bolívar",lat:10.29834,lon:-75.43417,role:"member",services:"Camping,Lodging",wa:"573153859820"},
+    {name:"Fazendinha Eros",country:"Brazil",city:"Boa Vista",lat:2.8177785,lon:-60.5951389,role:"member",services:"Camping",wa:""},
+    {name:"Sierra Alisos Hotel de Campo",country:"Ecuador",city:"Mindo",lat:-0.4027127,lon:-78.5758151,role:"member",services:"Hotel,Camping",wa:""},
+    {name:"Neumanns Place",country:"Argentina",city:"Salta",lat:-24.6993639,lon:-65.4842367,role:"member",services:"Lodging",wa:"5493875730111"},
+    {name:"Andean Roads Motorhome Rentals",country:"Argentina",city:"Buenos Aires",lat:-34.4981419,lon:-58.7228595,role:"member",services:"Motorhome rentals",wa:""},
+    {name:"Posada Marina Bella",country:"Argentina",city:"Chubut",lat:-45.9279443,lon:-67.5596818,role:"member",services:"Lodging",wa:"5492976244742"},
+    {name:"Camping Ráquira El Molino",country:"Colombia",city:"Ráquira",lat:5.5462077,lon:-73.6370794,role:"member",services:"Camping,Restaurant,Rooms",wa:""},
+    {name:"Camping El Paraiso Verde",country:"Paraguay",city:"",lat:-27.1612,lon:-56.2426,role:"member",services:"Camping",wa:"595976394880"},
+    {name:"Hotel Campestre Lagos de Venecia",country:"Colombia",city:"Pereira",lat:4.8899535,lon:-75.6227646,role:"member",services:"Glamping,Camping,Hotel",wa:""},
+    {name:"Camping and Rooms — Pucallpa",country:"Peru",city:"Pucallpa",lat:-8.3515577,lon:-74.5775873,role:"member",services:"Camping,Rooms",wa:"51941483585"},
+    {name:"Swiss Wassi",country:"Peru",city:"Tumbes",lat:-3.7250946,lon:-80.7600991,role:"member",services:"Camping,Rooms",wa:""},
+    {name:"Hostal Andenes del Sol",country:"Peru",city:"Cusco area",lat:-13.5122634,lon:-71.9835162,role:"member",services:"Hostal,Tours",wa:""},
+    {name:"Hospedaje Cusco Family — ETV",country:"Peru",city:"Cusco",lat:-13.5192691,lon:-71.9602147,role:"member",services:"Apartment,Airbnb",wa:"51941483585"},
+    {name:"Caleta Vidal — Overlander Camping",country:"Peru",city:"Caleta Vidal",lat:-10.8500329,lon:-77.6929231,role:"member",services:"Camping,Rooms,Panamericana",wa:"51941483585"},
+    {name:"Villamargarita Motorhome Campsite",country:"Colombia",city:"Nariño",lat:1.2076275,lon:-77.2170981,role:"member",services:"Camping,Apiterapia",wa:""},
+    {name:"Padua Hotel Glamping and Camping",country:"Colombia",city:"Nariño",lat:1.3439947,lon:-77.2839997,role:"member",services:"Glamping,Camping,Hotel",wa:"573146950049"},
+    {name:"Fundo Pampas del Rosario",country:"Peru",city:"Ancash",lat:-9.48929,lon:-78.24293,role:"member",services:"Camping,Lodging",wa:"51996280620"},
+    {name:"La Casa De Lili",country:"Peru",city:"Ancash",lat:-9.2879894,lon:-77.6322454,role:"member",services:"Rooms,Lodging",wa:""},
+    {name:"Fundo Santa María",country:"Peru",city:"Cajamarca",lat:-7.1575,lon:-78.50652,role:"member",services:"Camping,Lodging",wa:"51980682363"},
+    {name:"Camper Site Mesa de los Santos",country:"Colombia",city:"Santander",lat:6.8577902,lon:-73.0647985,role:"member",services:"Camping,Overland",wa:""},
+    {name:"Hotel & Camping La Cumbre Del Macizo",country:"Colombia",city:"Macizo",lat:1.8899319,lon:-76.284248,role:"member",services:"Hotel,Camping",wa:""}
+  ];
+  placePins(camps);
+  document.getElementById('stat-members').textContent = camps.length;
+  document.getElementById('loading').classList.add('hidden');
+}
+
+// ── FULLSCREEN ──
+const mapEl = document.getElementById('map');
+const btnFs = document.getElementById('btn-fullscreen');
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    mapEl.requestFullscreen().then(() => {
+      btnFs.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>`;
+      btnFs.title = 'Salir de pantalla completa';
+      setTimeout(() => map.invalidateSize(), 200);
+    }).catch(() => {});
+  } else {
+    document.exitFullscreen().then(() => {
+      btnFs.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+      btnFs.title = 'Pantalla completa';
+      setTimeout(() => map.invalidateSize(), 200);
+    }).catch(() => {});
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  setTimeout(() => map.invalidateSize(), 200);
+});
+
+// ── LOCATE USER ──
+let userMarker = null;
+let userCircle = null;
+const btnLoc = document.getElementById('btn-locate');
+
+function locateMe() {
+  if (!navigator.geolocation) {
+    alert('Tu navegador no soporta geolocalización.');
+    return;
+  }
+  btnLoc.classList.add('active');
+  btnLoc.title = 'Buscando ubicación…';
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+
+      // Remove previous
+      if (userMarker) { map.removeLayer(userMarker); map.removeLayer(userCircle); }
+
+      // Blue dot icon for user
+      const userIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width:14px;height:14px;border-radius:50%;
+          background:#2563EB;border:2px solid white;
+          box-shadow:0 0 0 3px rgba(37,99,235,0.3)">
+        </div>`,
+        iconSize: [14,14], iconAnchor: [7,7], popupAnchor: [0,-10]
+      });
+
+      userCircle = L.circle([lat, lon], {
+        radius: acc, color: '#2563EB', fillColor: '#2563EB',
+        fillOpacity: 0.08, weight: 1
+      }).addTo(map);
+
+      userMarker = L.marker([lat, lon], { icon: userIcon })
+        .addTo(map)
+        .bindPopup(`<div style="font-family:'DM Sans',sans-serif;padding:8px 10px;font-size:13px;color:#1a1a1a">
+          <strong>📍 Tu ubicación</strong><br>
+          <span style="font-size:11px;color:#666">Precisión: ~${Math.round(acc)}m</span>
+        </div>`)
+        .openPopup();
+
+      map.flyTo([lat, lon], 7, { duration: 1.5 });
+      btnLoc.classList.remove('active');
+      btnLoc.title = 'Mi ubicación';
+    },
+    (err) => {
+      btnLoc.classList.remove('active');
+      btnLoc.title = 'Mi ubicación';
+      if (err.code === 1) alert('Permiso de ubicación denegado. Actívalo en tu navegador.');
+      else alert('No se pudo obtener tu ubicación. Intenta de nuevo.');
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+// ── SHARE BUTTON ──
+document.getElementById('share-btn').href =
+  'https://wa.me/?text=' + encodeURIComponent('🌎 ARCA Network — Camping & lodging map across South & Central America\n' + window.location.href);
+
+// ── START ──
+if (SHEET_ID === 'TU_SHEET_ID_AQUI') {
+  loadFallback(); // use built-in data until Sheet is connected
+} else {
+  loadFromSheets();
+}
+
+window.addEventListener('resize', () => map.invalidateSize());
+</script>
+</body>
+</html>
