@@ -232,7 +232,8 @@ function loadFromSheets() {
           lon:      parseFloat(get('lon')),
           role:     get('role') || 'member',
           services: get('services'),
-          wa:       get('whatsapp').replace(/\D/g, ''),
+          // WhatsApp arrives as scientific notation — convert properly
+          wa: (() => { const wi = cols.indexOf('whatsapp'); const wv = (wi>=0 && row.c[wi]) ? row.c[wi].v : null; return wv ? Math.round(Number(wv)).toString() : ''; })(),
         };
       }).filter(c => !isNaN(c.lat) && !isNaN(c.lon) && c.name);
 
