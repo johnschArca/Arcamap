@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCA Admin — Peru Video Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F7F1E8;--dark:#1C0D06;--text:#2A1505;--muted:#6B4A30;
+  --border:#D4B898;--green:#1D6B50;--amber:#D4A86A;--red:#C0392B;
+  --surface:#fff;--f-disp:'Cormorant Garamond',serif;--f-body:'DM Sans',sans-serif;}
+html,body{min-height:100%;font-family:var(--f-body);background:var(--bg);color:var(--text)}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.login-box{background:var(--dark);border-radius:4px;padding:2.5rem;width:100%;max-width:360px;text-align:center}
+.login-title{font-family:var(--f-disp);font-size:1.8rem;color:#F5EDD5;margin-bottom:.35rem}
+.login-title em{font-style:italic;color:var(--amber)}
+.login-sub{font-size:.78rem;color:rgba(245,237,213,.35);margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:.08em}
+.login-input{width:100%;padding:.65rem 1rem;border:1px solid rgba(212,168,106,.3);border-radius:2px;
+  background:rgba(255,255,255,.06);color:#F5EDD5;font-family:var(--f-body);font-size:.85rem;
+  outline:none;margin-bottom:.75rem;text-align:center;letter-spacing:.1em}
+.login-input::placeholder{color:rgba(245,237,213,.25)}
+.login-input:focus{border-color:var(--amber)}
+.login-btn{width:100%;padding:.7rem;background:var(--amber);color:var(--dark);
+  border:none;border-radius:2px;font-family:var(--f-disp);font-size:1rem;
+  font-weight:600;cursor:pointer;transition:background .15s}
+.login-btn:hover{background:#c49558}
+.login-error{color:#f87171;font-size:.78rem;margin-top:.5rem;display:none}
+
+/* ADMIN UI */
+.admin-wrap{display:none;flex-direction:column;min-height:100vh}
+.admin-header{background:var(--dark);padding:.85rem 1.25rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;
+  position:sticky;top:0;z-index:100}
+.admin-logo{font-family:var(--f-disp);font-size:1.1rem;color:#F5EDD5}
+.admin-logo em{font-style:italic;color:var(--amber)}
+.admin-logo span{font-size:.65rem;color:rgba(245,237,213,.35);text-transform:uppercase;
+  letter-spacing:.08em;display:block;margin-top:1px}
+.hbtns{display:flex;gap:.5rem;flex-wrap:wrap}
+.btn{padding:.45rem .9rem;border-radius:2px;border:none;font-family:var(--f-body);
+  font-size:.78rem;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--amber);color:var(--dark)}
+.btn-green{background:var(--green);color:white}
+.btn-red{background:var(--red);color:white}
+.btn-outline{background:transparent;color:rgba(245,237,213,.6);border:1px solid rgba(212,168,106,.3)}
+.btn-sm{padding:.3rem .65rem;font-size:.72rem}
+.btn:hover{opacity:.85}
+
+.admin-body{flex:1;padding:1.25rem}
+
+/* SEARCH SECTION */
+.search-panel{background:var(--surface);border:1px solid var(--border);border-radius:3px;
+  padding:1.25rem;margin-bottom:1.25rem}
+.sp-title{font-family:var(--f-disp);font-size:1.2rem;margin-bottom:.85rem}
+.sp-row{display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:.6rem;align-items:end;flex-wrap:wrap}
+@media(max-width:700px){.sp-row{grid-template-columns:1fr 1fr}}
+.field label{font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:.4rem}
+.field select,.field input{width:100%;padding:.5rem .8rem;border:1px solid var(--border);
+  border-radius:2px;font-family:var(--f-body);font-size:.8rem;background:var(--bg);
+  color:var(--text);outline:none}
+.field select:focus,.field input:focus{border-color:var(--green)}
+.progress{margin-top:.75rem;display:none}
+.progress-bar{background:var(--bg);border:1px solid var(--border);border-radius:2px;height:5px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
+.progress-txt{font-size:.72rem;color:var(--muted);margin-bottom:.4rem}
+
+/* STATS BAR */
+.stats-bar{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:3px;
+  padding:.6rem 1rem;text-align:center;flex:1;min-width:80px}
+.stat-n{font-family:var(--f-disp);font-size:1.4rem;color:var(--green)}
+.stat-l{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+
+/* FILTERS */
+.filters-row{display:flex;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap;align-items:center}
+.fpill{padding:.28rem .75rem;border-radius:20px;font-size:.72rem;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  cursor:pointer;font-family:var(--f-body);transition:all .15s}
+.fpill.active{background:var(--dark);color:#F5EDD5;border-color:var(--dark)}
+.fcount{font-size:.72rem;color:var(--muted);margin-left:auto}
+
+/* VIDEO GRID */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.85rem}
+.vcard{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;
+  transition:box-shadow .15s}
+.vcard:hover{box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.vcard.approved{border-color:var(--green)}
+.vcard.rejected{opacity:.5}
+.vc-thumb{position:relative;padding-top:56.25%;background:#111;cursor:pointer}
+.vc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vc-thumb .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s}
+.vc-thumb:hover .play{opacity:1}
+.play svg{width:40px;height:40px;fill:white}
+.lang-badge{position:absolute;top:6px;right:6px;font-size:1rem;
+  background:rgba(0,0,0,.6);border-radius:2px;padding:1px 5px}
+.status-stripe{height:3px;width:100%}
+.status-stripe.approved{background:var(--green)}
+.status-stripe.pending{background:var(--amber)}
+.status-stripe.rejected{background:var(--red)}
+.vc-body{padding:.85rem}
+.vc-title{font-size:.8rem;font-weight:500;color:var(--text);line-height:1.4;
+  margin-bottom:.35rem;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+.vc-loc{font-size:.7rem;color:var(--green);margin-bottom:.35rem}
+.vc-meta{font-size:.68rem;color:var(--muted);margin-bottom:.65rem}
+.vc-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+
+.empty{text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1}
+.empty h3{font-family:var(--f-disp);font-size:1.3rem;font-style:italic;margin-bottom:.5rem}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-box">
+    <div class="login-title">ARCA <em>Admin</em></div>
+    <div class="login-sub">Peru Travel Video Map</div>
+    <input class="login-input" type="password" id="pwd-input" placeholder="Enter password"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Access Admin Panel</button>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- ADMIN UI -->
+<div class="admin-wrap" id="admin-wrap">
+  <div class="admin-header">
+    <div class="admin-logo">
+      ARCA <em>Admin</em>
+      <span>Peru Travel Video Map — Content Moderation</span>
+    </div>
+    <div class="hbtns">
+      <button class="btn btn-green btn-sm" onclick="approveAll()">✅ Approve all pending</button>
+      <button class="btn btn-red btn-sm" onclick="clearRejected()">🗑 Clear rejected</button>
+      <button class="btn btn-primary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-outline btn-sm" onclick="viewPublicMap()">🗺 View public map</button>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- SEARCH -->
+    <div class="search-panel">
+      <div class="sp-title">Search YouTube videos by location</div>
+      <div class="sp-row">
+        <div class="field">
+          <label>Department</label>
+          <select id="sel-dept" onchange="updateProvs()">
+            <option value="">All departments</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Province / Location</label>
+          <select id="sel-prov">
+            <option value="">Select province</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Language</label>
+          <select id="sel-lang">
+            <option value="">All languages</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="fr">🇫🇷 French</option>
+            <option value="de">🇩🇪 German</option>
+            <option value="it">🇮🇹 Italian</option>
+          </select>
+        </div>
+        <div class="field" style="align-self:end">
+          <button class="btn btn-primary" onclick="doSearch()">Search</button>
+        </div>
+        <div class="field" style="align-self:end">
+          <button class="btn btn-outline" onclick="searchAllLocations()" title="Search all 221 locations">Search all</button>
+        </div>
+      </div>
+      <div class="progress" id="progress">
+        <div class="progress-txt" id="progress-txt">Searching…</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Total</div></div>
+      <div class="stat"><div class="stat-n" id="s-pending">0</div><div class="stat-l">Pending</div></div>
+      <div class="stat"><div class="stat-n" id="s-approved">0</div><div class="stat-l">Approved</div></div>
+      <div class="stat"><div class="stat-n" id="s-rejected">0</div><div class="stat-l">Rejected</div></div>
+      <div class="stat"><div class="stat-n" id="s-locations">0</div><div class="stat-l">Locations</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-row">
+      <button class="fpill active" onclick="setFilter('all',this)">All</button>
+      <button class="fpill" onclick="setFilter('pending',this)">Pending</button>
+      <button class="fpill" onclick="setFilter('approved',this)">Approved</button>
+      <button class="fpill" onclick="setFilter('rejected',this)">Rejected</button>
+      <button class="fpill" onclick="setFilter('en',this)">🇬🇧 EN</button>
+      <button class="fpill" onclick="setFilter('es',this)">🇪🇸 ES</button>
+      <button class="fpill" onclick="setFilter('fr',this)">🇫🇷 FR</button>
+      <button class="fpill" onclick="setFilter('de',this)">🇩🇪 DE</button>
+      <button class="fpill" onclick="setFilter('it',this)">🇮🇹 IT</button>
+      <span class="fcount" id="fcount"></span>
+    </div>
+
+    <!-- VIDEO GRID -->
+    <div class="vgrid" id="vgrid"></div>
+  </div>
+</div>
+
+<script>
+const ALL_LOCATIONS = [
+  {dept:"Amazonas", name:"Amazonas (Department)", query:"Amazonas Peru turismo travel", lat:-6.231, lon:-77.8682, isDept:true},
+  {dept:"Amazonas", name:"Chachapoyas", query:"Chachapoyas Amazonas Peru turismo travel viajero", lat:-6.231, lon:-77.8682, isDept:false},
+  {dept:"Amazonas", name:"Bagua", query:"Bagua Amazonas Peru turismo travel viajero", lat:-6.231, lon:-77.8682, isDept:false},
+  {dept:"Amazonas", name:"Bongará", query:"Bongará Amazonas Peru turismo travel viajero", lat:-6.231, lon:-77.8682, isDept:false},
+  {dept:"Amazonas", name:"Condorcanqui", query:"Condorcanqui Amazonas Peru turismo travel viajero", lat:-6.231, lon:-77.8682, isDept:false},
+  {dept:"Amazonas", name:"Luya", query:"Luya Amazonas Peru turismo travel viajero", lat:-6.231, lon:-77.8682, isDept:false},
+  {dept:"Amazonas", name:"Rodríguez de Mendoza", query:"Rodríguez de Mendoza Amazonas Peru turismo travel viajero", lat:-6.231, lon:-77.8682, isDept:false},
+  {dept:"Amazonas", name:"Utcubamba", query:"Utcubamba Amazonas Peru turismo travel viajero", lat:-6.231, lon:-77.8682, isDept:false},
+  {dept:"Áncash", name:"Áncash (Department)", query:"Áncash Peru turismo travel", lat:-9.528, lon:-77.5275, isDept:true},
+  {dept:"Áncash", name:"Huaraz", query:"Huaraz Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Aija", query:"Aija Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Antonio Raimondi", query:"Antonio Raimondi Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Asunción", query:"Asunción Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Bolognesi", query:"Bolognesi Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Carhuaz", query:"Carhuaz Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Carlos Fermín Fitzcarrald", query:"Carlos Fermín Fitzcarrald Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Casma", query:"Casma Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Corongo", query:"Corongo Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Huari", query:"Huari Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Huarmey", query:"Huarmey Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Huaylas", query:"Huaylas Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Mariscal Luzuriaga", query:"Mariscal Luzuriaga Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Ocros", query:"Ocros Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Pallasca", query:"Pallasca Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Pomabamba", query:"Pomabamba Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Recuay", query:"Recuay Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Santa", query:"Santa Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Sihuas", query:"Sihuas Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Áncash", name:"Yungay", query:"Yungay Áncash Peru turismo travel viajero", lat:-9.528, lon:-77.5275, isDept:false},
+  {dept:"Apurímac", name:"Apurímac (Department)", query:"Apurímac Peru turismo travel", lat:-13.6355, lon:-72.8814, isDept:true},
+  {dept:"Apurímac", name:"Abancay", query:"Abancay Apurímac Peru turismo travel viajero", lat:-13.6355, lon:-72.8814, isDept:false},
+  {dept:"Apurímac", name:"Andahuaylas", query:"Andahuaylas Apurímac Peru turismo travel viajero", lat:-13.6355, lon:-72.8814, isDept:false},
+  {dept:"Apurímac", name:"Antabamba", query:"Antabamba Apurímac Peru turismo travel viajero", lat:-13.6355, lon:-72.8814, isDept:false},
+  {dept:"Apurímac", name:"Aymaraes", query:"Aymaraes Apurímac Peru turismo travel viajero", lat:-13.6355, lon:-72.8814, isDept:false},
+  {dept:"Apurímac", name:"Cotabambas", query:"Cotabambas Apurímac Peru turismo travel viajero", lat:-13.6355, lon:-72.8814, isDept:false},
+  {dept:"Apurímac", name:"Chincheros", query:"Chincheros Apurímac Peru turismo travel viajero", lat:-13.6355, lon:-72.8814, isDept:false},
+  {dept:"Apurímac", name:"Grau", query:"Grau Apurímac Peru turismo travel viajero", lat:-13.6355, lon:-72.8814, isDept:false},
+  {dept:"Arequipa", name:"Arequipa (Department)", query:"Arequipa Peru turismo travel", lat:-16.409, lon:-71.5375, isDept:true},
+  {dept:"Arequipa", name:"Arequipa", query:"Arequipa Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Arequipa", name:"Camaná", query:"Camaná Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Arequipa", name:"Caravelí", query:"Caravelí Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Arequipa", name:"Castilla", query:"Castilla Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Arequipa", name:"Caylloma", query:"Caylloma Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Arequipa", name:"Condesuyos", query:"Condesuyos Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Arequipa", name:"Islay", query:"Islay Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Arequipa", name:"La Unión", query:"La Unión Arequipa Peru turismo travel viajero", lat:-16.409, lon:-71.5375, isDept:false},
+  {dept:"Ayacucho", name:"Ayacucho (Department)", query:"Ayacucho Peru turismo travel", lat:-13.1588, lon:-74.2236, isDept:true},
+  {dept:"Ayacucho", name:"Huamanga", query:"Huamanga Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Cangallo", query:"Cangallo Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Huanca Sancos", query:"Huanca Sancos Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Huanta", query:"Huanta Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"La Mar", query:"La Mar Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Lucanas", query:"Lucanas Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Parinacochas", query:"Parinacochas Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Páucar del Sara Sara", query:"Páucar del Sara Sara Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Sucre", query:"Sucre Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Víctor Fajardo", query:"Víctor Fajardo Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Ayacucho", name:"Vilcas Huamán", query:"Vilcas Huamán Ayacucho Peru turismo travel viajero", lat:-13.1588, lon:-74.2236, isDept:false},
+  {dept:"Cajamarca", name:"Cajamarca (Department)", query:"Cajamarca Peru turismo travel", lat:-7.1641, lon:-78.5001, isDept:true},
+  {dept:"Cajamarca", name:"Cajamarca", query:"Cajamarca Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Cajabamba", query:"Cajabamba Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Celendín", query:"Celendín Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Chota", query:"Chota Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Contumazá", query:"Contumazá Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Cutervo", query:"Cutervo Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Hualgayoc", query:"Hualgayoc Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Jaén", query:"Jaén Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"San Ignacio", query:"San Ignacio Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"San Marcos", query:"San Marcos Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"San Miguel", query:"San Miguel Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"San Pablo", query:"San Pablo Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Cajamarca", name:"Santa Cruz", query:"Santa Cruz Cajamarca Peru turismo travel viajero", lat:-7.1641, lon:-78.5001, isDept:false},
+  {dept:"Callao", name:"Callao (Department)", query:"Callao Peru turismo travel", lat:-12.0565, lon:-77.1183, isDept:true},
+  {dept:"Callao", name:"Callao", query:"Callao Callao Peru turismo travel viajero", lat:-12.0565, lon:-77.1183, isDept:false},
+  {dept:"Cusco", name:"Cusco (Department)", query:"Cusco Peru turismo travel", lat:-13.5319, lon:-71.9675, isDept:true},
+  {dept:"Cusco", name:"Cusco", query:"Cusco Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Acomayo", query:"Acomayo Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Anta", query:"Anta Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Calca", query:"Calca Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Canas", query:"Canas Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Canchis", query:"Canchis Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Chumbivilcas", query:"Chumbivilcas Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Espinar", query:"Espinar Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"La Convención", query:"La Convención Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Paruro", query:"Paruro Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Paucartambo", query:"Paucartambo Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Quispicanchi", query:"Quispicanchi Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Cusco", name:"Urubamba", query:"Urubamba Cusco Peru turismo travel viajero", lat:-13.5319, lon:-71.9675, isDept:false},
+  {dept:"Huancavelica", name:"Huancavelica (Department)", query:"Huancavelica Peru turismo travel", lat:-12.7869, lon:-74.976, isDept:true},
+  {dept:"Huancavelica", name:"Huancavelica", query:"Huancavelica Huancavelica Peru turismo travel viajero", lat:-12.7869, lon:-74.976, isDept:false},
+  {dept:"Huancavelica", name:"Acobamba", query:"Acobamba Huancavelica Peru turismo travel viajero", lat:-12.7869, lon:-74.976, isDept:false},
+  {dept:"Huancavelica", name:"Angaraes", query:"Angaraes Huancavelica Peru turismo travel viajero", lat:-12.7869, lon:-74.976, isDept:false},
+  {dept:"Huancavelica", name:"Castrovirreyna", query:"Castrovirreyna Huancavelica Peru turismo travel viajero", lat:-12.7869, lon:-74.976, isDept:false},
+  {dept:"Huancavelica", name:"Churcampa", query:"Churcampa Huancavelica Peru turismo travel viajero", lat:-12.7869, lon:-74.976, isDept:false},
+  {dept:"Huancavelica", name:"Huaytará", query:"Huaytará Huancavelica Peru turismo travel viajero", lat:-12.7869, lon:-74.976, isDept:false},
+  {dept:"Huancavelica", name:"Tayacaja", query:"Tayacaja Huancavelica Peru turismo travel viajero", lat:-12.7869, lon:-74.976, isDept:false},
+  {dept:"Huánuco", name:"Huánuco (Department)", query:"Huánuco Peru turismo travel", lat:-9.9306, lon:-76.2422, isDept:true},
+  {dept:"Huánuco", name:"Huánuco", query:"Huánuco Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Ambo", query:"Ambo Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Dos de Mayo", query:"Dos de Mayo Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Huacaybamba", query:"Huacaybamba Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Huamalíes", query:"Huamalíes Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Leoncio Prado", query:"Leoncio Prado Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Marañón", query:"Marañón Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Pachitea", query:"Pachitea Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Puerto Inca", query:"Puerto Inca Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Lauricocha", query:"Lauricocha Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Huánuco", name:"Yarowilca", query:"Yarowilca Huánuco Peru turismo travel viajero", lat:-9.9306, lon:-76.2422, isDept:false},
+  {dept:"Ica", name:"Ica (Department)", query:"Ica Peru turismo travel", lat:-14.0678, lon:-75.7286, isDept:true},
+  {dept:"Ica", name:"Ica", query:"Ica Ica Peru turismo travel viajero", lat:-14.0678, lon:-75.7286, isDept:false},
+  {dept:"Ica", name:"Chincha", query:"Chincha Ica Peru turismo travel viajero", lat:-14.0678, lon:-75.7286, isDept:false},
+  {dept:"Ica", name:"Nazca", query:"Nazca Ica Peru turismo travel viajero", lat:-14.0678, lon:-75.7286, isDept:false},
+  {dept:"Ica", name:"Palpa", query:"Palpa Ica Peru turismo travel viajero", lat:-14.0678, lon:-75.7286, isDept:false},
+  {dept:"Ica", name:"Pisco", query:"Pisco Ica Peru turismo travel viajero", lat:-14.0678, lon:-75.7286, isDept:false},
+  {dept:"Junín", name:"Junín (Department)", query:"Junín Peru turismo travel", lat:-11.9964, lon:-75.2972, isDept:true},
+  {dept:"Junín", name:"Huancayo", query:"Huancayo Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Chanchamayo", query:"Chanchamayo Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Chupaca", query:"Chupaca Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Concepción", query:"Concepción Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Jauja", query:"Jauja Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Junín", query:"Junín Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Satipo", query:"Satipo Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Tarma", query:"Tarma Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"Junín", name:"Yauli", query:"Yauli Junín Peru turismo travel viajero", lat:-11.9964, lon:-75.2972, isDept:false},
+  {dept:"La Libertad", name:"La Libertad (Department)", query:"La Libertad Peru turismo travel", lat:-8.1116, lon:-79.0288, isDept:true},
+  {dept:"La Libertad", name:"Trujillo", query:"Trujillo La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Ascope", query:"Ascope La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Bolívar", query:"Bolívar La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Chepén", query:"Chepén La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Julcán", query:"Julcán La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Otuzco", query:"Otuzco La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Pacasmayo", query:"Pacasmayo La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Pataz", query:"Pataz La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Sánchez Carrión", query:"Sánchez Carrión La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Santiago de Chuco", query:"Santiago de Chuco La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Gran Chimú", query:"Gran Chimú La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"La Libertad", name:"Virú", query:"Virú La Libertad Peru turismo travel viajero", lat:-8.1116, lon:-79.0288, isDept:false},
+  {dept:"Lambayeque", name:"Lambayeque (Department)", query:"Lambayeque Peru turismo travel", lat:-6.7714, lon:-79.8409, isDept:true},
+  {dept:"Lambayeque", name:"Chiclayo", query:"Chiclayo Lambayeque Peru turismo travel viajero", lat:-6.7714, lon:-79.8409, isDept:false},
+  {dept:"Lambayeque", name:"Ferreñafe", query:"Ferreñafe Lambayeque Peru turismo travel viajero", lat:-6.7714, lon:-79.8409, isDept:false},
+  {dept:"Lambayeque", name:"Lambayeque", query:"Lambayeque Lambayeque Peru turismo travel viajero", lat:-6.7714, lon:-79.8409, isDept:false},
+  {dept:"Lima", name:"Lima (Department)", query:"Lima Peru turismo travel", lat:-12.0464, lon:-77.0428, isDept:true},
+  {dept:"Lima", name:"Lima", query:"Lima Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Barranca", query:"Barranca Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Cajatambo", query:"Cajatambo Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Canta", query:"Canta Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Cañete", query:"Cañete Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Huaral", query:"Huaral Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Huarochirí", query:"Huarochirí Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Huaura", query:"Huaura Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Oyón", query:"Oyón Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Lima", name:"Yauyos", query:"Yauyos Lima Peru turismo travel viajero", lat:-12.0464, lon:-77.0428, isDept:false},
+  {dept:"Loreto", name:"Loreto (Department)", query:"Loreto Peru turismo travel", lat:-3.7491, lon:-73.2538, isDept:true},
+  {dept:"Loreto", name:"Maynas", query:"Maynas Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Loreto", name:"Alto Amazonas", query:"Alto Amazonas Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Loreto", name:"Datem del Marañón", query:"Datem del Marañón Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Loreto", name:"Loreto", query:"Loreto Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Loreto", name:"Mariscal Ramón Castilla", query:"Mariscal Ramón Castilla Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Loreto", name:"Putumayo", query:"Putumayo Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Loreto", name:"Requena", query:"Requena Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Loreto", name:"Ucayali", query:"Ucayali Loreto Peru turismo travel viajero", lat:-3.7491, lon:-73.2538, isDept:false},
+  {dept:"Madre de Dios", name:"Madre de Dios (Department)", query:"Madre de Dios Peru turismo travel", lat:-12.5933, lon:-69.1891, isDept:true},
+  {dept:"Madre de Dios", name:"Tambopata", query:"Tambopata Madre de Dios Peru turismo travel viajero", lat:-12.5933, lon:-69.1891, isDept:false},
+  {dept:"Madre de Dios", name:"Manu", query:"Manu Madre de Dios Peru turismo travel viajero", lat:-12.5933, lon:-69.1891, isDept:false},
+  {dept:"Madre de Dios", name:"Tahuamanu", query:"Tahuamanu Madre de Dios Peru turismo travel viajero", lat:-12.5933, lon:-69.1891, isDept:false},
+  {dept:"Moquegua", name:"Moquegua (Department)", query:"Moquegua Peru turismo travel", lat:-17.1934, lon:-70.935, isDept:true},
+  {dept:"Moquegua", name:"Mariscal Nieto", query:"Mariscal Nieto Moquegua Peru turismo travel viajero", lat:-17.1934, lon:-70.935, isDept:false},
+  {dept:"Moquegua", name:"General Sánchez Cerro", query:"General Sánchez Cerro Moquegua Peru turismo travel viajero", lat:-17.1934, lon:-70.935, isDept:false},
+  {dept:"Moquegua", name:"Ilo", query:"Ilo Moquegua Peru turismo travel viajero", lat:-17.1934, lon:-70.935, isDept:false},
+  {dept:"Pasco", name:"Pasco (Department)", query:"Pasco Peru turismo travel", lat:-10.6867, lon:-76.2583, isDept:true},
+  {dept:"Pasco", name:"Pasco", query:"Pasco Pasco Peru turismo travel viajero", lat:-10.6867, lon:-76.2583, isDept:false},
+  {dept:"Pasco", name:"Daniel Alcides Carrión", query:"Daniel Alcides Carrión Pasco Peru turismo travel viajero", lat:-10.6867, lon:-76.2583, isDept:false},
+  {dept:"Pasco", name:"Oxapampa", query:"Oxapampa Pasco Peru turismo travel viajero", lat:-10.6867, lon:-76.2583, isDept:false},
+  {dept:"Piura", name:"Piura (Department)", query:"Piura Peru turismo travel", lat:-5.1945, lon:-80.6328, isDept:true},
+  {dept:"Piura", name:"Piura", query:"Piura Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Piura", name:"Ayabaca", query:"Ayabaca Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Piura", name:"Huancabamba", query:"Huancabamba Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Piura", name:"Morropón", query:"Morropón Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Piura", name:"Paita", query:"Paita Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Piura", name:"Sechura", query:"Sechura Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Piura", name:"Sullana", query:"Sullana Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Piura", name:"Talara", query:"Talara Piura Peru turismo travel viajero", lat:-5.1945, lon:-80.6328, isDept:false},
+  {dept:"Puno", name:"Puno (Department)", query:"Puno Peru turismo travel", lat:-15.8402, lon:-70.0219, isDept:true},
+  {dept:"Puno", name:"Puno", query:"Puno Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Azángaro", query:"Azángaro Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Carabaya", query:"Carabaya Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Chucuito", query:"Chucuito Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"El Collao", query:"El Collao Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Huancané", query:"Huancané Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Lampa", query:"Lampa Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Melgar", query:"Melgar Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Moho", query:"Moho Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"San Antonio de Putina", query:"San Antonio de Putina Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"San Román", query:"San Román Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Sandia", query:"Sandia Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"Puno", name:"Yunguyo", query:"Yunguyo Puno Peru turismo travel viajero", lat:-15.8402, lon:-70.0219, isDept:false},
+  {dept:"San Martín", name:"San Martín (Department)", query:"San Martín Peru turismo travel", lat:-6.0452, lon:-76.9892, isDept:true},
+  {dept:"San Martín", name:"Moyobamba", query:"Moyobamba San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"Bellavista", query:"Bellavista San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"El Dorado", query:"El Dorado San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"Huallaga", query:"Huallaga San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"Lamas", query:"Lamas San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"Mariscal Cáceres", query:"Mariscal Cáceres San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"Picota", query:"Picota San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"Rioja", query:"Rioja San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"San Martín", query:"San Martín San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"San Martín", name:"Tocache", query:"Tocache San Martín Peru turismo travel viajero", lat:-6.0452, lon:-76.9892, isDept:false},
+  {dept:"Tacna", name:"Tacna (Department)", query:"Tacna Peru turismo travel", lat:-18.0066, lon:-70.2462, isDept:true},
+  {dept:"Tacna", name:"Tacna", query:"Tacna Tacna Peru turismo travel viajero", lat:-18.0066, lon:-70.2462, isDept:false},
+  {dept:"Tacna", name:"Candarave", query:"Candarave Tacna Peru turismo travel viajero", lat:-18.0066, lon:-70.2462, isDept:false},
+  {dept:"Tacna", name:"Jorge Basadre", query:"Jorge Basadre Tacna Peru turismo travel viajero", lat:-18.0066, lon:-70.2462, isDept:false},
+  {dept:"Tacna", name:"Tarata", query:"Tarata Tacna Peru turismo travel viajero", lat:-18.0066, lon:-70.2462, isDept:false},
+  {dept:"Tumbes", name:"Tumbes (Department)", query:"Tumbes Peru turismo travel", lat:-3.5669, lon:-80.4515, isDept:true},
+  {dept:"Tumbes", name:"Tumbes", query:"Tumbes Tumbes Peru turismo travel viajero", lat:-3.5669, lon:-80.4515, isDept:false},
+  {dept:"Tumbes", name:"Contralmirante Villar", query:"Contralmirante Villar Tumbes Peru turismo travel viajero", lat:-3.5669, lon:-80.4515, isDept:false},
+  {dept:"Tumbes", name:"Zarumilla", query:"Zarumilla Tumbes Peru turismo travel viajero", lat:-3.5669, lon:-80.4515, isDept:false},
+  {dept:"Ucayali", name:"Ucayali (Department)", query:"Ucayali Peru turismo travel", lat:-8.3791, lon:-74.5539, isDept:true},
+  {dept:"Ucayali", name:"Coronel Portillo", query:"Coronel Portillo Ucayali Peru turismo travel viajero", lat:-8.3791, lon:-74.5539, isDept:false},
+  {dept:"Ucayali", name:"Atalaya", query:"Atalaya Ucayali Peru turismo travel viajero", lat:-8.3791, lon:-74.5539, isDept:false},
+  {dept:"Ucayali", name:"Padre Abad", query:"Padre Abad Ucayali Peru turismo travel viajero", lat:-8.3791, lon:-74.5539, isDept:false},
+  {dept:"Ucayali", name:"Purús", query:"Purús Ucayali Peru turismo travel viajero", lat:-8.3791, lon:-74.5539, isDept:false},
+];
+const WORKER_URL = 'https://arca-youtube-proxy.johnsanchezabogado.workers.dev';
+const ADMIN_PASSWORD = 'arca2025admin';
+let allVideos = [];
+let activeFilter = 'all';
+
+// ── LOGIN ──
+function doLogin(){
+  const pwd = document.getElementById('pwd-input').value;
+  if(pwd === ADMIN_PASSWORD){
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('admin-wrap').style.display='flex';
+    initAdmin();
+  } else {
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('pwd-input').value='';
+  }
+}
+function doLogout(){
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('admin-wrap').style.display='none';
+  document.getElementById('pwd-input').value='';
+}
+
+// ── INIT ──
+function initAdmin(){
+  try { allVideos = JSON.parse(localStorage.getItem('arca_all_videos')||'[]'); } catch(e){}
+  syncApproved();
+  renderGrid();
+
+  // Populate dept select
+  const depts = [...new Set(ALL_LOCATIONS.map(l=>l.dept))].sort();
+  const ds = document.getElementById('sel-dept');
+  depts.forEach(d=>{ const o=document.createElement('option');o.value=d;o.textContent=d;ds.appendChild(o);});
+  updateProvs();
+}
+
+function updateProvs(){
+  const dept = document.getElementById('sel-dept').value;
+  const ps = document.getElementById('sel-prov');
+  ps.innerHTML = '<option value="">All provinces</option>';
+  ALL_LOCATIONS.filter(l=>!dept||l.dept===dept).forEach(l=>{
+    const o=document.createElement('option');o.value=l.name;o.textContent=l.name;ps.appendChild(o);
+  });
+}
+
+// ── LANGUAGE DETECTION ──
+function detectLang(title, desc, reqLang){
+  if(reqLang) return reqLang;
+  const text = (title+' '+desc).toLowerCase();
+  if(/\b(viaje|turismo|perú|lima|cusco|increíble|hermoso|ciudad|lugar)\b/.test(text)) return 'es';
+  if(/\b(voyage|tourisme|magnifique|découverte|belle)\b/.test(text)) return 'fr';
+  if(/\b(reise|sehenswürdigkeiten|schön|reisen|entdecken)\b/.test(text)) return 'de';
+  if(/\b(viaggio|turismo|bellissimo|scoprire|meraviglioso)\b/.test(text)) return 'it';
+  return 'en';
+}
+
+// ── YOUTUBE SEARCH ──
+async function fetchYT(query, lang){
+  const langParam = lang ? `&lang=${lang}` : '';
+  const url = `${WORKER_URL}?q=${encodeURIComponent(query)}${langParam}`;
+  const r = await fetch(url);
+  const d = await r.json();
+  return d.items||[];
+}
+
+async function doSearch(){
+  const prov = document.getElementById('sel-prov').value;
+  const dept = document.getElementById('sel-dept').value;
+  const lang = document.getElementById('sel-lang').value;
+  const locName = prov || dept;
+  if(!locName){alert('Please select a department or province');return;}
+  const loc = ALL_LOCATIONS.find(l=>l.name===locName) || ALL_LOCATIONS.find(l=>l.dept===dept);
+  if(!loc) return;
+  showProgress(true, `Searching: ${locName}…`, 50);
+  try{
+    const items = await fetchYT(loc.query+(lang?` language:${lang}`:''), lang);
+    addVideos(items, loc, lang);
+    showProgress(true, `Found ${items.length} videos for ${locName}`, 100);
+    setTimeout(()=>showProgress(false),2000);
+  }catch(e){ showProgress(true,'Error: '+e.message,100); }
+  renderGrid();
+}
+
+async function searchAllLocations(){
+  const lang = document.getElementById('sel-lang').value;
+  showProgress(true,'Starting search…',0);
+  for(let i=0;i<ALL_LOCATIONS.length;i++){
+    const loc=ALL_LOCATIONS[i];
+    showProgress(true,`${loc.name} (${i+1}/${ALL_LOCATIONS.length})`, Math.round((i+1)/ALL_LOCATIONS.length*100));
+    try{
+      const items = await fetchYT(loc.query, lang);
+      addVideos(items, loc, lang);
+      await new Promise(r=>setTimeout(r,350));
+    }catch(e){console.warn(loc.name,e);}
+  }
+  showProgress(true,`Done — ${allVideos.length} videos found`,100);
+  setTimeout(()=>showProgress(false),3000);
+  renderGrid();
+}
+
+function addVideos(items, loc, reqLang){
+  const newVids = items.map(item=>({
+    id: item.id.videoId,
+    title: item.snippet.title,
+    thumb: item.snippet.thumbnails?.medium?.url||'',
+    channel: item.snippet.channelTitle,
+    published: item.snippet.publishedAt?.slice(0,10)||'',
+    lang: detectLang(item.snippet.title, item.snippet.description||'', reqLang),
+    location: loc.name, dept: loc.dept,
+    lat: loc.lat, lon: loc.lon,
+    status:'pending',
+  })).filter(v=>v.id && !allVideos.find(e=>e.id===v.id));
+  allVideos=[...allVideos,...newVids];
+  saveAll();
+}
+
+function showProgress(show, txt='', pct=0){
+  document.getElementById('progress').style.display=show?'block':'none';
+  if(txt) document.getElementById('progress-txt').textContent=txt;
+  document.getElementById('progress-fill').style.width=pct+'%';
+}
+
+// ── STATUS ──
+function setStatus(id,status){
+  const v=allVideos.find(v=>v.id===id);
+  if(v){v.status=status;saveAll();syncApproved();renderGrid();}
+}
+function approveAll(){
+  allVideos.filter(v=>v.status==='pending').forEach(v=>v.status='approved');
+  saveAll();syncApproved();renderGrid();
+}
+function clearRejected(){
+  allVideos=allVideos.filter(v=>v.status!=='rejected');
+  saveAll();renderGrid();
+}
+
+// ── STORAGE ──
+function saveAll(){
+  try{localStorage.setItem('arca_all_videos',JSON.stringify(allVideos));}catch(e){}
+  syncApproved();
+}
+function syncApproved(){
+  const approved=allVideos.filter(v=>v.status==='approved');
+  try{localStorage.setItem('arca_approved',JSON.stringify(approved));}catch(e){}
+}
+
+// ── RENDER ──
+function setFilter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.fpill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function renderGrid(){
+  updateStats();
+  let filtered=allVideos;
+  if(activeFilter==='pending') filtered=allVideos.filter(v=>v.status==='pending');
+  else if(activeFilter==='approved') filtered=allVideos.filter(v=>v.status==='approved');
+  else if(activeFilter==='rejected') filtered=allVideos.filter(v=>v.status==='rejected');
+  else if(['en','es','fr','de','it'].includes(activeFilter)) filtered=allVideos.filter(v=>v.lang===activeFilter);
+
+  document.getElementById('fcount').textContent=`${filtered.length} video${filtered.length!==1?'s':''}`;
+  const grid=document.getElementById('vgrid');
+  if(!filtered.length){
+    grid.innerHTML=`<div class="empty"><h3>${allVideos.length?'No videos match this filter':'No videos yet'}</h3>
+      <p>${allVideos.length?'Try a different filter':'Search for videos above to get started'}</p></div>`;
+    return;
+  }
+  const flags={en:'🇬🇧',es:'🇪🇸',fr:'🇫🇷',de:'🇩🇪',it:'🇮🇹'};
+  grid.innerHTML=filtered.map(v=>`
+    <div class="vcard ${v.status}">
+      <div class="vc-thumb" onclick="window.open('https://youtu.be/${v.id}','_blank')">
+        <img src="${v.thumb}" loading="lazy" alt="">
+        <div class="play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="lang-badge">${flags[v.lang]||'🌐'}</div>
+      </div>
+      <div class="status-stripe ${v.status}"></div>
+      <div class="vc-body">
+        <div class="vc-title">${v.title}</div>
+        <div class="vc-loc">📍 ${v.location} · ${v.dept}</div>
+        <div class="vc-meta">${v.channel} · ${v.published}</div>
+        <div class="vc-actions">
+          ${v.status!=='approved'?`<button class="btn btn-green btn-sm" onclick="setStatus('${v.id}','approved')">✅ Approve</button>`:''}
+          ${v.status!=='rejected'?`<button class="btn btn-red btn-sm" onclick="setStatus('${v.id}','rejected')">❌ Reject</button>`:''}
+          ${v.status!=='pending'?`<button class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border)" onclick="setStatus('${v.id}','pending')">↩ Reset</button>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function updateStats(){
+  document.getElementById('s-total').textContent=allVideos.length;
+  document.getElementById('s-pending').textContent=allVideos.filter(v=>v.status==='pending').length;
+  document.getElementById('s-approved').textContent=allVideos.filter(v=>v.status==='approved').length;
+  document.getElementById('s-rejected').textContent=allVideos.filter(v=>v.status==='rejected').length;
+  document.getElementById('s-locations').textContent=[...new Set(allVideos.map(v=>v.location))].length;
+}
+
+// ── EXPORT ──
+function exportCSV(){
+  const approved=allVideos.filter(v=>v.status==='approved');
+  if(!approved.length){alert('No approved videos to export.');return;}
+  const rows=[['id','title','channel','location','dept','lat','lon','lang','published','url']];
+  approved.forEach(v=>rows.push([v.id,v.title,v.channel,v.location,v.dept,v.lat,v.lon,v.lang,v.published,`https://youtu.be/${v.id}`]));
+  const csv=rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='arca_peru_approved_videos.csv';a.click();
+}
+
+function viewPublicMap(){
+  window.open('arca-peru-map-v2-public.html','_blank');
+}
+</script>
+</body>
+</html>
