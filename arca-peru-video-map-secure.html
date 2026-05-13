@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peru Travel Videos — ARCA Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F1E8;--dark:#1C0D06;--text:#2A1505;--muted:#6B4A30;
+  --border:#D4B898;--green:#1D6B50;--amber:#D4A86A;--red:#C0392B;
+  --surface:#fff;--f-disp:'Cormorant Garamond',serif;--f-body:'DM Sans',sans-serif;
+}
+html,body{height:100%;font-family:var(--f-body);background:var(--bg);color:var(--text)}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--dark);border-bottom:1px solid rgba(255,255,255,.08)}
+.tab{padding:.7rem 1.4rem;font-size:.8rem;font-weight:500;letter-spacing:.05em;
+  text-transform:uppercase;color:rgba(245,237,213,.4);cursor:pointer;border:none;
+  background:transparent;font-family:var(--f-body);transition:all .15s}
+.tab.active{color:var(--amber);border-bottom:2px solid var(--amber)}
+.tab:hover:not(.active){color:rgba(245,237,213,.7)}
+.panel{display:none;height:calc(100vh - 44px)}
+.panel.active{display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+.header{background:var(--dark);padding:.9rem 1.25rem;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hlogo{font-family:var(--f-disp);font-size:1.2rem;color:#F5EDD5}
+.hlogo em{font-style:italic;color:var(--amber)}
+.hsub{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(245,237,213,.35);margin-top:2px}
+
+/* ── SEARCH PANEL ── */
+.search-body{flex:1;overflow-y:auto;padding:1.25rem}
+.search-controls{background:var(--surface);border:1px solid var(--border);
+  border-radius:3px;padding:1.25rem;margin-bottom:1rem}
+.sc-title{font-family:var(--f-disp);font-size:1.3rem;color:var(--text);margin-bottom:.75rem}
+.sc-row{display:grid;grid-template-columns:1fr 1fr auto auto;gap:.6rem;align-items:end}
+.field label{font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:.4rem}
+.field select,.field input{width:100%;padding:.55rem .8rem;border:1px solid var(--border);
+  border-radius:2px;font-family:var(--f-body);font-size:.82rem;background:var(--bg);
+  color:var(--text);outline:none}
+.field select:focus,.field input:focus{border-color:var(--green)}
+.btn{padding:.55rem 1.1rem;border-radius:2px;border:none;
+  font-family:var(--f-body);font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--dark);color:#F5EDD5}
+.btn-primary:hover{background:#2A1505}
+.btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.btn-green{background:var(--green);color:white}
+.btn-green:hover{background:#155a3f}
+.btn-red{background:var(--red);color:white}
+.btn-red:hover{background:#a93226}
+.btn-sm{padding:.3rem .7rem;font-size:.72rem}
+
+.progress-bar{background:var(--bg);border:1px solid var(--border);border-radius:2px;
+  height:6px;margin:.75rem 0;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
+.status-text{font-size:.75rem;color:var(--muted);margin-bottom:.5rem}
+
+/* ── VIDEO RESULTS ── */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:.75rem}
+.vcard{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.vcard-thumb{position:relative;padding-top:56.25%;background:#111;cursor:pointer}
+.vcard-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vcard-thumb .play-btn{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s}
+.vcard-thumb:hover .play-btn{opacity:1}
+.play-btn svg{width:48px;height:48px;fill:white;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.lang-flag{position:absolute;top:6px;right:6px;font-size:1.1rem;
+  background:rgba(0,0,0,.6);border-radius:3px;padding:2px 5px}
+.vcard-body{padding:.85rem}
+.vcard-title{font-size:.82rem;font-weight:500;color:var(--text);
+  line-height:1.4;margin-bottom:.4rem;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+.vcard-meta{font-size:.7rem;color:var(--muted);margin-bottom:.6rem}
+.vcard-location{font-size:.7rem;color:var(--green);margin-bottom:.7rem;font-weight:500}
+.vcard-actions{display:flex;gap:.5rem}
+.badge{display:inline-block;font-size:.62rem;padding:2px 7px;border-radius:2px;font-weight:500}
+.badge-en{background:#dbeafe;color:#1e40af}
+.badge-es{background:#fef9c3;color:#854d0e}
+.badge-approved{background:#dcfce7;color:#166534}
+.badge-pending{background:#fef3c7;color:#92400e}
+
+/* ── ADMIN PANEL ── */
+.admin-body{flex:1;overflow-y:auto;padding:1.25rem}
+.admin-filters{display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.filter-pill{padding:.3rem .8rem;border-radius:20px;font-size:.72rem;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  cursor:pointer;font-family:var(--f-body);transition:all .15s}
+.filter-pill.active{background:var(--dark);color:#F5EDD5;border-color:var(--dark)}
+.admin-count{font-size:.72rem;color:var(--muted);margin-left:auto}
+
+.vtable{width:100%;border-collapse:collapse}
+.vtable th{background:var(--dark);color:rgba(245,237,213,.6);font-size:.68rem;
+  letter-spacing:.08em;text-transform:uppercase;padding:.5rem .75rem;
+  text-align:left;font-weight:500}
+.vtable td{padding:.6rem .75rem;border-bottom:1px solid var(--bg);
+  font-size:.78rem;vertical-align:middle}
+.vtable tr:hover td{background:rgba(212,168,106,.05)}
+.vtable td:first-child{font-weight:500;color:var(--text)}
+.thumb-sm{width:80px;height:45px;object-fit:cover;border-radius:2px}
+
+/* ── MAP PANEL ── */
+#map-panel{flex-direction:row}
+#map{flex:1;height:100%}
+.map-sidebar{width:340px;flex-shrink:0;background:var(--surface);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{background:var(--dark);padding:1rem 1.1rem;flex-shrink:0}
+.sidebar-title{font-family:var(--f-disp);font-size:1.1rem;color:#F5EDD5}
+.sidebar-sub{font-size:.65rem;color:rgba(245,237,213,.35);margin-top:2px;text-transform:uppercase;letter-spacing:.08em}
+.sidebar-body{flex:1;overflow-y:auto;padding:.85rem}
+.video-item{margin-bottom:.85rem;padding-bottom:.85rem;border-bottom:1px solid var(--bg)}
+.video-item:last-child{border-bottom:none}
+.vi-thumb{width:100%;padding-top:56.25%;position:relative;border-radius:2px;
+  overflow:hidden;background:#111;margin-bottom:.55rem;cursor:pointer}
+.vi-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vi-thumb iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+.vi-title{font-size:.8rem;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:.3rem}
+.vi-meta{font-size:.68rem;color:var(--muted);display:flex;gap:.5rem;align-items:center}
+.placeholder-msg{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.placeholder-msg h3{font-family:var(--f-disp);font-size:1.3rem;margin-bottom:.5rem;font-style:italic}
+.placeholder-msg p{font-size:.8rem;line-height:1.6}
+
+/* Leaflet popup */
+.leaflet-popup-content-wrapper{border-radius:3px!important;border:1px solid var(--border)!important;
+  box-shadow:0 4px 16px rgba(28,13,6,.15)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important}
+.popup-box{font-family:var(--f-body);padding:10px 13px;min-width:160px}
+.popup-name{font-family:var(--f-disp);font-size:1rem;font-weight:600;color:#2A1505;margin-bottom:3px}
+.popup-count{font-size:.72rem;color:#6B4A30}
+</style>
+</head>
+<body>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('search')">🔍 Search YouTube</button>
+  <button class="tab" onclick="showTab('admin')">⚙️ Admin / Moderate</button>
+  <button class="tab" onclick="showTab('map')">🗺 Live Map</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 1: YOUTUBE SEARCH
+═══════════════════════════════════════════ -->
+<div id="tab-search" class="panel active" style="flex-direction:column">
+  <div class="header">
+    <div>
+      <div class="hlogo">ARCA <em>Peru</em> — Travel Video Search</div>
+      <div class="hsub">Automated YouTube search by province & region</div>
+    </div>
+    <button class="btn btn-green" onclick="exportApproved()">⬇ Export approved to Sheet</button>
+  </div>
+  <div class="search-body">
+    <div class="search-controls">
+      <div class="sc-title">Search travel videos</div>
+      <div class="sc-row">
+        <div class="field">
+          <label>Region / Province</label>
+          <select id="sel-location">
+            <option value="">— Select location —</option>
+            <optgroup label="🏔 Lima & surroundings">
+              <option value="Lima Peru">Lima</option>
+              <option value="Huacho Peru">Huacho</option>
+              <option value="Chancay Peru">Chancay</option>
+              <option value="Huaral Peru">Huaral</option>
+              <option value="Barranca Peru">Barranca</option>
+              <option value="Supe Peru">Supe / Caral</option>
+            </optgroup>
+            <optgroup label="🏔 Ancash">
+              <option value="Huaraz Peru">Huaraz</option>
+              <option value="Chimbote Peru">Chimbote</option>
+              <option value="Caraz Peru">Caraz</option>
+              <option value="Yungay Peru">Yungay</option>
+            </optgroup>
+            <optgroup label="🌊 La Libertad">
+              <option value="Trujillo Peru">Trujillo</option>
+              <option value="Chan Chan Peru">Chan Chan</option>
+              <option value="Huanchaco Peru">Huanchaco</option>
+            </optgroup>
+            <optgroup label="🌴 Lambayeque">
+              <option value="Chiclayo Peru">Chiclayo</option>
+              <option value="Sipan Peru">Sipán</option>
+              <option value="Tucume Peru">Túcume</option>
+            </optgroup>
+            <optgroup label="🏜 Piura">
+              <option value="Piura Peru">Piura</option>
+              <option value="Mancora Peru">Máncora</option>
+              <option value="Colan Peru">Colán</option>
+            </optgroup>
+            <optgroup label="🏔 Cusco">
+              <option value="Cusco Peru">Cusco</option>
+              <option value="Machu Picchu Peru">Machu Picchu</option>
+              <option value="Valle Sagrado Peru">Valle Sagrado</option>
+              <option value="Ollantaytambo Peru">Ollantaytambo</option>
+            </optgroup>
+            <optgroup label="🏔 Puno">
+              <option value="Puno Peru">Puno</option>
+              <option value="Lago Titicaca Peru">Lago Titicaca</option>
+              <option value="Uros Peru">Islas Uros</option>
+            </optgroup>
+            <optgroup label="🌿 Amazonas / San Martín">
+              <option value="Chachapoyas Peru">Chachapoyas</option>
+              <option value="Kuelap Peru">Kuélap</option>
+              <option value="Tarapoto Peru">Tarapoto</option>
+            </optgroup>
+            <optgroup label="🌿 Loreto / Ucayali">
+              <option value="Iquitos Peru">Iquitos</option>
+              <option value="Pucallpa Peru">Pucallpa</option>
+            </optgroup>
+            <optgroup label="🏜 Ica / Arequipa">
+              <option value="Ica Peru">Ica</option>
+              <option value="Huacachina Peru">Huacachina</option>
+              <option value="Arequipa Peru">Arequipa</option>
+              <option value="Colca Peru">Cañón del Colca</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field">
+          <label>Language</label>
+          <select id="sel-lang">
+            <option value="both">Both EN + ES</option>
+            <option value="en">English only</option>
+            <option value="es">Spanish only</option>
+          </select>
+        </div>
+        <div class="field" style="align-self:end">
+          <button class="btn btn-primary" id="btn-search" onclick="searchYouTube()">Search</button>
+        </div>
+        <div class="field" style="align-self:end">
+          <button class="btn btn-primary" onclick="searchAll()" title="Search all locations">Search all</button>
+        </div>
+      </div>
+      <div id="progress-wrap" style="display:none">
+        <div class="status-text" id="status-text">Searching…</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div id="results-grid" class="results-grid"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 2: ADMIN
+═══════════════════════════════════════════ -->
+<div id="tab-admin" class="panel" style="flex-direction:column">
+  <div class="header">
+    <div>
+      <div class="hlogo">ARCA <em>Admin</em> — Video Moderation</div>
+      <div class="hsub">Approve or reject videos before they appear on the map</div>
+    </div>
+    <div style="display:flex;gap:.6rem">
+      <button class="btn btn-green btn-sm" onclick="approveAll()">✅ Approve all pending</button>
+      <button class="btn btn-red btn-sm" onclick="clearRejected()">🗑 Clear rejected</button>
+    </div>
+  </div>
+  <div class="admin-body">
+    <div class="admin-filters">
+      <button class="filter-pill active" onclick="setFilter('all',this)">All</button>
+      <button class="filter-pill" onclick="setFilter('pending',this)">Pending</button>
+      <button class="filter-pill" onclick="setFilter('approved',this)">Approved</button>
+      <button class="filter-pill" onclick="setFilter('rejected',this)">Rejected</button>
+      <button class="filter-pill" onclick="setFilter('en',this)">🇬🇧 English</button>
+      <button class="filter-pill" onclick="setFilter('es',this)">🇪🇸 Spanish</button>
+      <span class="admin-count" id="admin-count"></span>
+    </div>
+    <table class="vtable" id="admin-table">
+      <thead>
+        <tr>
+          <th>Thumbnail</th>
+          <th>Title</th>
+          <th>Location</th>
+          <th>Language</th>
+          <th>Views</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="admin-tbody"></tbody>
+    </table>
+    <div id="admin-empty" style="display:none;text-align:center;padding:3rem;color:var(--muted)">
+      <p style="font-family:var(--f-disp);font-size:1.3rem;font-style:italic">No videos yet</p>
+      <p style="font-size:.8rem;margin-top:.5rem">Search for videos in the Search tab first</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 3: MAP
+═══════════════════════════════════════════ -->
+<div id="tab-map" class="panel" id="map-panel">
+  <div id="map"></div>
+  <div class="map-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Travel Videos</div>
+      <div class="sidebar-sub" id="sidebar-location-name">Click a pin to see videos</div>
+    </div>
+    <div class="sidebar-body" id="sidebar-body">
+      <div class="placeholder-msg">
+        <h3>Discover Peru</h3>
+        <p>Click any pin on the map to watch travel videos from that location — in English or Spanish.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const WORKER_URL = 'https://arca-youtube-proxy.johnsanchezabogado.workers.dev';
+
+// ── PERU LOCATIONS with GPS ──
+const LOCATIONS = [
+  {name:'Lima',          query:'Lima Peru viaje turismo',        lat:-12.0464, lon:-77.0428},
+  {name:'Huacho',        query:'Huacho Peru turismo viajero',    lat:-11.1065, lon:-77.6049},
+  {name:'Chancay',       query:'Chancay Peru turismo',           lat:-11.5692, lon:-77.2714},
+  {name:'Huaral',        query:'Huaral Peru turismo',            lat:-11.4966, lon:-77.2072},
+  {name:'Barranca',      query:'Barranca Peru turismo viaje',    lat:-10.7506, lon:-77.7625},
+  {name:'Supe / Caral',  query:'Caral Peru archaeological site', lat:-10.8943, lon:-77.5224},
+  {name:'Huaraz',        query:'Huaraz Peru travel adventure',   lat:-9.5280,  lon:-77.5275},
+  {name:'Chimbote',      query:'Chimbote Peru turismo',          lat:-9.0853,  lon:-78.5783},
+  {name:'Caraz',         query:'Caraz Peru turismo Cordillera',  lat:-9.0500,  lon:-77.8167},
+  {name:'Yungay',        query:'Yungay Peru turismo huascaran',  lat:-9.1389,  lon:-77.7444},
+  {name:'Trujillo',      query:'Trujillo Peru travel tourism',   lat:-8.1116,  lon:-79.0288},
+  {name:'Chan Chan',     query:'Chan Chan Peru ruins travel',    lat:-8.1050,  lon:-79.0700},
+  {name:'Huanchaco',     query:'Huanchaco Peru surf travel',     lat:-8.0822,  lon:-79.1183},
+  {name:'Chiclayo',      query:'Chiclayo Peru turismo viaje',    lat:-6.7714,  lon:-79.8409},
+  {name:'Sipán',         query:'Señor Sipan Peru turismo',       lat:-6.8278,  lon:-79.7922},
+  {name:'Túcume',        query:'Tucume Peru piramides turismo',  lat:-6.5119,  lon:-79.8575},
+  {name:'Piura',         query:'Piura Peru turismo viaje',       lat:-5.1945,  lon:-80.6328},
+  {name:'Máncora',       query:'Mancora Peru travel beach',      lat:-4.1054,  lon:-81.0445},
+  {name:'Colán',         query:'Colan Piura Peru turismo playa', lat:-5.0036,  lon:-81.0674},
+  {name:'Cusco',         query:'Cusco Peru travel tourism',      lat:-13.5319, lon:-71.9675},
+  {name:'Machu Picchu',  query:'Machu Picchu Peru travel',       lat:-13.1631, lon:-72.5450},
+  {name:'Valle Sagrado', query:'Valle Sagrado Cusco Peru travel',lat:-13.3264, lon:-72.1198},
+  {name:'Ollantaytambo', query:'Ollantaytambo Peru travel',      lat:-13.2584, lon:-72.2636},
+  {name:'Puno',          query:'Puno Peru turismo Titicaca',     lat:-15.8402, lon:-70.0219},
+  {name:'Lago Titicaca', query:'Titicaca Peru Bolivia travel',   lat:-15.9254, lon:-69.3354},
+  {name:'Islas Uros',    query:'Islas Uros Titicaca Peru travel',lat:-15.8167, lon:-69.9667},
+  {name:'Chachapoyas',   query:'Chachapoyas Peru travel',        lat:-6.2310,  lon:-77.8682},
+  {name:'Kuélap',        query:'Kuelap Peru ruins travel',       lat:-6.4178,  lon:-77.9217},
+  {name:'Tarapoto',      query:'Tarapoto Peru turismo selva',    lat:-6.4955,  lon:-76.3720},
+  {name:'Iquitos',       query:'Iquitos Amazon Peru travel',     lat:-3.7491,  lon:-73.2538},
+  {name:'Pucallpa',      query:'Pucallpa Peru turismo amazonia', lat:-8.3791,  lon:-74.5539},
+  {name:'Ica',           query:'Ica Peru turismo desierto',      lat:-14.0678, lon:-75.7286},
+  {name:'Huacachina',    query:'Huacachina Peru oasis travel',   lat:-14.0897, lon:-75.7636},
+  {name:'Arequipa',      query:'Arequipa Peru travel tourism',   lat:-16.4090, lon:-71.5375},
+  {name:'Cañón del Colca',query:'Colca Canyon Peru travel',     lat:-15.6394, lon:-71.9786},
+];
+
+// ── STATE ──
+let allVideos = [];
+let activeFilter = 'all';
+let mapInstance = null;
+let mapMarkers = {};
+
+// ── TABS ──
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['search','admin','map'][i] === id);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if (id === 'map') initMap();
+  if (id === 'admin') renderAdmin();
+}
+
+// ── YOUTUBE SEARCH ──
+async function fetchYT(query, lang) {
+  const langParam = lang ? `&lang=${lang}` : '';
+  const url = `${WORKER_URL}?q=${encodeURIComponent(query+" travel viaje turismo")}${langParam}`;
+  const r = await fetch(url);
+  const d = await r.json();
+  return d.items || [];
+}
+
+function detectLang(title, desc) {
+  const esWords = /\b(viaje|turismo|conoce|visita|lima|perú|peru|historia|lugar|ciudad|pueblo|hermoso|increíble)\b/i;
+  return esWords.test(title + ' ' + desc) ? 'es' : 'en';
+}
+
+async function searchYouTube() {
+  const locSel = document.getElementById('sel-location');
+  const loc = LOCATIONS.find(l => locSel.value && l.query.includes(locSel.value.split(' ')[0]));
+  const langSel = document.getElementById('sel-lang').value;
+
+  if (!locSel.value) { alert('Please select a location'); return; }
+
+  const locName = locSel.options[locSel.selectedIndex].text;
+  const locData = LOCATIONS.find(l => l.name === locName) || LOCATIONS[0];
+
+  document.getElementById('btn-search').disabled = true;
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('status-text').textContent = `Searching YouTube for "${locName}"…`;
+  document.getElementById('progress-fill').style.width = '50%';
+
+  try {
+    const langs = langSel === 'both' ? ['en','es'] : [langSel];
+    let items = [];
+    for (const l of langs) {
+      const res = await fetchYT(locData ? locData.query : locSel.value, l);
+      items = items.concat(res);
+    }
+
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('status-text').textContent = `Found ${items.length} videos`;
+
+    const newVids = items.map(item => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      thumb: item.snippet.thumbnails?.medium?.url || '',
+      channel: item.snippet.channelTitle,
+      published: item.snippet.publishedAt?.slice(0,10) || '',
+      lang: detectLang(item.snippet.title, item.snippet.description),
+      location: locName,
+      lat: locData?.lat || -12,
+      lon: locData?.lon || -77,
+      status: 'pending',
+    })).filter(v => !allVideos.find(e => e.id === v.id));
+
+    allVideos = [...allVideos, ...newVids];
+    renderResults(allVideos.filter(v => v.location === locName));
+    saveLocal();
+
+  } catch(e) {
+    document.getElementById('status-text').textContent = 'Error: ' + e.message;
+  }
+  document.getElementById('btn-search').disabled = false;
+}
+
+async function searchAll() {
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('btn-search').disabled = true;
+  const total = LOCATIONS.length;
+  for (let i = 0; i < total; i++) {
+    const loc = LOCATIONS[i];
+    document.getElementById('status-text').textContent = `Searching: ${loc.name} (${i+1}/${total})…`;
+    document.getElementById('progress-fill').style.width = ((i+1)/total*100) + '%';
+    try {
+      const items = await fetchYT(loc.query, '');
+      const newVids = items.map(item => ({
+        id: item.id.videoId,
+        title: item.snippet.title,
+        thumb: item.snippet.thumbnails?.medium?.url || '',
+        channel: item.snippet.channelTitle,
+        published: item.snippet.publishedAt?.slice(0,10) || '',
+        lang: detectLang(item.snippet.title, item.snippet.description),
+        location: loc.name, lat: loc.lat, lon: loc.lon,
+        status: 'pending',
+      })).filter(v => !allVideos.find(e => e.id === v.id));
+      allVideos = [...allVideos, ...newVids];
+      await new Promise(r => setTimeout(r, 300));
+    } catch(e) { console.warn(loc.name, e); }
+  }
+  document.getElementById('status-text').textContent = `Done — ${allVideos.length} videos found`;
+  document.getElementById('btn-search').disabled = false;
+  renderResults(allVideos);
+  saveLocal();
+}
+
+function renderResults(videos) {
+  const grid = document.getElementById('results-grid');
+  if (!videos.length) { grid.innerHTML = '<p style="color:var(--muted);font-size:.85rem">No videos found.</p>'; return; }
+  grid.innerHTML = videos.map(v => `
+    <div class="vcard">
+      <div class="vcard-thumb" onclick="openYT('${v.id}')">
+        <img src="${v.thumb}" loading="lazy" alt="${v.title}">
+        <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="lang-flag">${v.lang === 'en' ? '🇬🇧' : '🇪🇸'}</div>
+      </div>
+      <div class="vcard-body">
+        <div class="vcard-title">${v.title}</div>
+        <div class="vcard-meta">${v.channel} · ${v.published}</div>
+        <div class="vcard-location">📍 ${v.location}</div>
+        <div class="vcard-actions">
+          <span class="badge badge-${v.lang}">${v.lang.toUpperCase()}</span>
+          <span class="badge badge-${v.status}">${v.status}</span>
+          ${v.status === 'pending' ?
+            `<button class="btn btn-green btn-sm" onclick="setStatus('${v.id}','approved')">✅ Approve</button>
+             <button class="btn btn-red btn-sm" onclick="setStatus('${v.id}','rejected')">❌ Reject</button>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openYT(id) { window.open('https://www.youtube.com/watch?v='+id,'_blank'); }
+
+function setStatus(id, status) {
+  const v = allVideos.find(v => v.id === id);
+  if (v) { v.status = status; saveLocal(); renderResults(allVideos); renderAdmin(); updateMapPins(); }
+}
+
+// ── ADMIN ──
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderAdmin();
+}
+
+function renderAdmin() {
+  let filtered = allVideos;
+  if (activeFilter === 'pending')  filtered = allVideos.filter(v => v.status === 'pending');
+  if (activeFilter === 'approved') filtered = allVideos.filter(v => v.status === 'approved');
+  if (activeFilter === 'rejected') filtered = allVideos.filter(v => v.status === 'rejected');
+  if (activeFilter === 'en')       filtered = allVideos.filter(v => v.lang === 'en');
+  if (activeFilter === 'es')       filtered = allVideos.filter(v => v.lang === 'es');
+
+  document.getElementById('admin-count').textContent = `${filtered.length} videos`;
+  const empty = document.getElementById('admin-empty');
+  const table = document.getElementById('admin-table');
+  if (!allVideos.length) { empty.style.display = 'block'; table.style.display = 'none'; return; }
+  empty.style.display = 'none'; table.style.display = 'table';
+
+  document.getElementById('admin-tbody').innerHTML = filtered.map(v => `
+    <tr>
+      <td><img class="thumb-sm" src="${v.thumb}" onclick="openYT('${v.id}')" style="cursor:pointer" title="Play video"></td>
+      <td style="max-width:260px">
+        <div style="font-size:.78rem;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${v.title}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:2px">${v.channel}</div>
+      </td>
+      <td>📍 ${v.location}</td>
+      <td><span class="badge badge-${v.lang}">${v.lang === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}</span></td>
+      <td style="color:var(--muted);font-size:.72rem">${v.published}</td>
+      <td><span class="badge badge-${v.status}">${v.status}</span></td>
+      <td>
+        <div style="display:flex;gap:.4rem">
+          ${v.status !== 'approved' ? `<button class="btn btn-green btn-sm" onclick="setStatus('${v.id}','approved')">✅</button>` : ''}
+          ${v.status !== 'rejected' ? `<button class="btn btn-red btn-sm" onclick="setStatus('${v.id}','rejected')">❌</button>` : ''}
+          ${v.status !== 'pending'  ? `<button class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border)" onclick="setStatus('${v.id}','pending')">↩</button>` : ''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function approveAll() {
+  allVideos.filter(v => v.status === 'pending').forEach(v => v.status = 'approved');
+  saveLocal(); renderAdmin(); updateMapPins();
+}
+function clearRejected() {
+  allVideos = allVideos.filter(v => v.status !== 'rejected');
+  saveLocal(); renderAdmin();
+}
+
+// ── MAP ──
+function initMap() {
+  if (mapInstance) { updateMapPins(); return; }
+  mapInstance = L.map('map', { scrollWheelZoom:true }).setView([-9.19, -75.0], 5);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    {attribution:'Tiles © Esri', maxZoom:18}).addTo(mapInstance);
+  updateMapPins();
+}
+
+function updateMapPins() {
+  if (!mapInstance) return;
+  Object.values(mapMarkers).forEach(m => mapInstance.removeLayer(m));
+  mapMarkers = {};
+  const approved = allVideos.filter(v => v.status === 'approved');
+  const byLoc = {};
+  approved.forEach(v => {
+    if (!byLoc[v.location]) byLoc[v.location] = {lat:v.lat, lon:v.lon, videos:[]};
+    byLoc[v.location].videos.push(v);
+  });
+
+  // Also add all locations as light pins (no videos yet)
+  LOCATIONS.forEach(loc => {
+    if (!byLoc[loc.name]) {
+      const icon = L.divIcon({
+        className:'',
+        html:`<div style="width:9px;height:9px;border-radius:50%;background:#D4B898;border:1.5px solid #6B4A30;opacity:.6"></div>`,
+        iconSize:[9,9],iconAnchor:[4,4]
+      });
+      const m = L.marker([loc.lat,loc.lon],{icon}).addTo(mapInstance);
+      m.bindPopup(`<div class="popup-box"><div class="popup-name">${loc.name}</div><div class="popup-count">No videos yet</div></div>`);
+      mapMarkers['_'+loc.name] = m;
+    }
+  });
+
+  Object.entries(byLoc).forEach(([name, data]) => {
+    const count = data.videos.length;
+    const en = data.videos.filter(v => v.lang==='en').length;
+    const es = data.videos.filter(v => v.lang==='es').length;
+    const icon = L.divIcon({
+      className:'',
+      html:`<div style="position:relative">
+        <div style="width:14px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+          background:#C0392B;border:2px solid #7B241C;box-shadow:0 2px 5px rgba(0,0,0,.3)"></div>
+        <div style="position:absolute;top:-18px;left:10px;background:#1C0D06;color:#F5EDD5;
+          font-size:9px;padding:1px 4px;border-radius:2px;white-space:nowrap;font-family:sans-serif">${count}</div>
+      </div>`,
+      iconSize:[14,20],iconAnchor:[7,20],popupAnchor:[0,-22]
+    });
+    const m = L.marker([data.lat,data.lon],{icon}).addTo(mapInstance);
+    m.bindPopup(`<div class="popup-box">
+      <div class="popup-name">${name}</div>
+      <div class="popup-count">${count} video${count!==1?'s':''} · 🇬🇧${en} 🇪🇸${es}</div>
+    </div>`);
+    m.on('click', () => showSidebar(name, data.videos));
+    mapMarkers[name] = m;
+  });
+}
+
+function showSidebar(name, videos) {
+  document.getElementById('sidebar-location-name').textContent = '📍 ' + name;
+  document.getElementById('sidebar-body').innerHTML = videos.map(v => `
+    <div class="video-item">
+      <div class="vi-thumb" onclick="embedVideo(this,'${v.id}')">
+        <img src="${v.thumb}" alt="${v.title}">
+      </div>
+      <div class="vi-title">${v.title}</div>
+      <div class="vi-meta">
+        <span class="badge badge-${v.lang}">${v.lang === 'en' ? '🇬🇧 EN' : '🇪🇸 ES'}</span>
+        <span>${v.channel}</span>
+      </div>
+    </div>`).join('');
+}
+
+function embedVideo(el, id) {
+  el.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
+}
+
+// ── STORAGE ──
+function saveLocal() {
+  try { localStorage.setItem('arca_peru_videos', JSON.stringify(allVideos)); } catch(e) {}
+}
+function loadLocal() {
+  try { const d = localStorage.getItem('arca_peru_videos'); if(d) allVideos = JSON.parse(d); } catch(e) {}
+}
+
+// ── EXPORT ──
+function exportApproved() {
+  const approved = allVideos.filter(v => v.status === 'approved');
+  if (!approved.length) { alert('No approved videos to export yet.'); return; }
+  const rows = [['id','title','channel','location','lat','lon','lang','published','youtube_url']];
+  approved.forEach(v => rows.push([v.id, v.title, v.channel, v.location, v.lat, v.lon, v.lang, v.published, `https://youtu.be/${v.id}`]));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'arca_peru_videos.csv'; a.click();
+}
+
+loadLocal();
+</script>
+</body>
+</html>
