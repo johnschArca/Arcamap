@@ -170,7 +170,7 @@
 
 <div class="map-footer">
   <div class="leg"><div class="leg-pin green"></div><span class="leg-lbl">Founder</span></div>
-  <div class="leg"><div class="leg-pin gold"></div><span class="leg-lbl">Country leader</span></div>
+  <div class="leg"><span style="font-size:18px;line-height:1">⭐</span><span class="leg-lbl">Country leader</span></div>
   <div class="leg"><div class="leg-pin red"></div><span class="leg-lbl">Member</span></div>
 </div>
 
@@ -199,6 +199,15 @@ const pinColor  = { founder: '#1D6B50', leader: '#D4A86A', member: '#C0392B' };
 const pinBorder = { founder: '#0D3D2C', leader: '#8B6914', member: '#7B241C' };
 
 function makeIcon(role) {
+  // LEADERS get a red star pin
+  if (role === 'leader') {
+    const star = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+      <path d="M12 1.5l3.09 6.26 6.91 1-5 4.87 1.18 6.88L12 16.9l-6.18 3.61L7 13.63l-5-4.87 6.91-1z"
+        fill="#C0392B" stroke="#7B241C" stroke-width="1.2"/>
+    </svg>`;
+    return L.divIcon({ className:'', html:star, iconSize:[26,26], iconAnchor:[13,22], popupAnchor:[0,-24] });
+  }
+
   const c = pinColor[role] || pinColor.member;
   const b = pinBorder[role] || pinBorder.member;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="20" viewBox="0 0 28 40">
@@ -283,38 +292,38 @@ function loadFallback() {
     {name:"Finca Sommerwind",country:"Ecuador",city:"Ibarra",lat:0.38039,lon:-78.0895,role:"leader",services:"Camping,Overlander",wa:"593939371170"},
     {name:"Finca La Bonanza — Chez Kika",country:"Colombia",city:"Silvia",lat:2.6136105,lon:-76.4647675,role:"leader",services:"Hostal,Camping",wa:"573166226221"},
     {name:"Ecocamp Huacachina",country:"Peru",city:"Ica",lat:-14.0889552,lon:-75.7638388,role:"member",services:"Eco camping",wa:"51956000487"},
-    {name:"PatagonFox Camping Express",country:"Chile",city:"Santiago",lat:-33.3834158,lon:-70.8558114,role:"leader",services:"Camping,Overland",wa:""},
+    {name:"PatagonFox Camping Express",country:"Chile",city:"Santiago",lat:-33.3834158,lon:-70.8558114,role:"leader",services:"Camping,Overland",wa:"56995785269"},
     {name:"La Casita — Overlander Lodging",country:"Brazil",city:"Navegantes",lat:-26.8573945,lon:-48.6475938,role:"leader",services:"Lodging,Camping",wa:"5547992414009"},
-    {name:"The Overland Embassy",country:"Panama",city:"Panama City",lat:9.0144558,lon:-79.4868234,role:"leader",services:"Shipping,Repairs,Camping",wa:""},
+    {name:"The Overland Embassy",country:"Panama",city:"Panama City",lat:9.0144558,lon:-79.4868234,role:"leader",services:"Shipping,Repairs,Camping",wa:"50767800065"},
     {name:"Hotel Conzulado 96 — Colán Beach",country:"Peru",city:"Colán",lat:-5.003591,lon:-81.0674188,role:"member",services:"Lodging,Beach camping,Airbnb",wa:"51941483585"},
     {name:"Tourism Dios es Amor",country:"Peru",city:"Aguaytia",lat:-9.0385612,lon:-75.5091674,role:"member",services:"Tours,Adventure,Fishing",wa:"51941483585"},
     {name:"Cabañas Del Sauce",country:"Argentina",city:"Paraná",lat:-31.7443349,lon:-60.3556697,role:"leader",services:"Lodging,Camping",wa:"5493435724178"},
-    {name:"Peru Titicaca & Connections",country:"Peru",city:"Puno",lat:-15.8411759,lon:-70.0281277,role:"member",services:"Tours,Titicaca",wa:""},
+    {name:"Peru Titicaca & Connections",country:"Peru",city:"Puno",lat:-15.8411759,lon:-70.0281277,role:"member",services:"Tours,Titicaca",wa:"51951680469"},
     {name:"Finca Mi Casita",country:"Colombia",city:"Armenia",lat:4.5245625,lon:-75.7454375,role:"member",services:"Camping,Lodging",wa:"573142829022"},
     {name:"Camping Las Colinas",country:"Bolivia",city:"La Paz",lat:-16.5521913,lon:-68.0660362,role:"member",services:"Camping,Lodging",wa:"59168125858"},
-    {name:"CamperPark PatagonFox Ralun",country:"Chile",city:"Ralún",lat:-41.366514,lon:-72.3470034,role:"member",services:"Camping,Patagonia",wa:""},
-    {name:"Zapparancho",country:"Argentina",city:"Buenos Aires",lat:-34.8189744,lon:-58.9374743,role:"member",services:"Lodging,Camping",wa:""},
+    {name:"CamperPark PatagonFox Ralun",country:"Chile",city:"Ralún",lat:-41.366514,lon:-72.3470034,role:"member",services:"Camping,Patagonia",wa:"56995785269"},
+    {name:"Zapparancho",country:"Argentina",city:"Buenos Aires",lat:-34.8189744,lon:-58.9374743,role:"member",services:"Lodging,Camping",wa:"5491176486674"},
     {name:"Finca El Manantial",country:"Colombia",city:"Bolívar",lat:10.29834,lon:-75.43417,role:"member",services:"Camping,Lodging",wa:"573153859820"},
-    {name:"Fazendinha Eros",country:"Brazil",city:"Boa Vista",lat:2.8177785,lon:-60.5951389,role:"member",services:"Camping",wa:""},
-    {name:"Sierra Alisos Hotel de Campo",country:"Ecuador",city:"Mindo",lat:-0.4027127,lon:-78.5758151,role:"member",services:"Hotel,Camping",wa:""},
+    {name:"Fazendinha Eros",country:"Brazil",city:"Boa Vista",lat:2.8177785,lon:-60.5951389,role:"member",services:"Camping",wa:"5595984018200"},
+    {name:"Sierra Alisos Hotel de Campo",country:"Ecuador",city:"Mindo",lat:-0.4027127,lon:-78.5758151,role:"member",services:"Hotel,Camping",wa:"593989405064"},
     {name:"Neumanns Place",country:"Argentina",city:"Salta",lat:-24.6993639,lon:-65.4842367,role:"member",services:"Lodging",wa:"5493875730111"},
-    {name:"Andean Roads Motorhome Rentals",country:"Argentina",city:"Buenos Aires",lat:-34.4981419,lon:-58.7228595,role:"member",services:"Motorhome rentals",wa:""},
+    {name:"Andean Roads Motorhome Rentals",country:"Argentina",city:"Buenos Aires",lat:-34.4981419,lon:-58.7228595,role:"member",services:"Motorhome rentals",wa:"5491137813907"},
     {name:"Posada Marina Bella",country:"Argentina",city:"Chubut",lat:-45.9279443,lon:-67.5596818,role:"member",services:"Lodging",wa:"5492976244742"},
-    {name:"Camping Ráquira El Molino",country:"Colombia",city:"Ráquira",lat:5.5462077,lon:-73.6370794,role:"member",services:"Camping,Restaurant,Rooms",wa:""},
+    {name:"Camping Ráquira El Molino",country:"Colombia",city:"Ráquira",lat:5.5462077,lon:-73.6370794,role:"member",services:"Camping,Restaurant,Rooms",wa:"573208274423"},
     {name:"Camping El Paraiso Verde",country:"Paraguay",city:"",lat:-27.1612,lon:-56.2426,role:"member",services:"Camping",wa:"595976394880"},
-    {name:"Hotel Campestre Lagos de Venecia",country:"Colombia",city:"Pereira",lat:4.8899535,lon:-75.6227646,role:"member",services:"Glamping,Camping,Hotel",wa:""},
+    {name:"Hotel Campestre Lagos de Venecia",country:"Colombia",city:"Pereira",lat:4.8899535,lon:-75.6227646,role:"member",services:"Glamping,Camping,Hotel",wa:"573187126778"},
     {name:"Camping and Rooms — Pucallpa",country:"Peru",city:"Pucallpa",lat:-8.3515577,lon:-74.5775873,role:"member",services:"Camping,Rooms",wa:"51941483585"},
-    {name:"Swiss Wassi",country:"Peru",city:"Tumbes",lat:-3.7250946,lon:-80.7600991,role:"member",services:"Camping,Rooms",wa:""},
-    {name:"Hostal Andenes del Sol",country:"Peru",city:"Cusco area",lat:-13.5122634,lon:-71.9835162,role:"member",services:"Hostal,Tours",wa:""},
+    {name:"Swiss Wassi",country:"Peru",city:"Tumbes",lat:-3.7250946,lon:-80.7600991,role:"member",services:"Camping,Rooms",wa:"51987598537"},
+    {name:"Hostal Andenes del Sol",country:"Peru",city:"Cusco area",lat:-13.5122634,lon:-71.9835162,role:"member",services:"Hostal,Tours",wa:"51957273179"},
     {name:"Hospedaje Cusco Family — ETV",country:"Peru",city:"Cusco",lat:-13.5192691,lon:-71.9602147,role:"member",services:"Apartment,Airbnb",wa:"51941483585"},
     {name:"Caleta Vidal — Overlander Camping",country:"Peru",city:"Caleta Vidal",lat:-10.8500329,lon:-77.6929231,role:"member",services:"Camping,Rooms,Panamericana",wa:"51941483585"},
-    {name:"Villamargarita Motorhome Campsite",country:"Colombia",city:"Nariño",lat:1.2076275,lon:-77.2170981,role:"member",services:"Camping,Apiterapia",wa:""},
+    {name:"Villamargarita Motorhome Campsite",country:"Colombia",city:"Nariño",lat:1.2076275,lon:-77.2170981,role:"member",services:"Camping,Apiterapia",wa:"573135589067"},
     {name:"Padua Hotel Glamping and Camping",country:"Colombia",city:"Nariño",lat:1.3439947,lon:-77.2839997,role:"member",services:"Glamping,Camping,Hotel",wa:"573146950049"},
     {name:"Fundo Pampas del Rosario",country:"Peru",city:"Ancash",lat:-9.48929,lon:-78.24293,role:"member",services:"Camping,Lodging",wa:"51996280620"},
-    {name:"La Casa De Lili",country:"Peru",city:"Ancash",lat:-9.2879894,lon:-77.6322454,role:"member",services:"Rooms,Lodging",wa:""},
+    {name:"La Casa De Lili",country:"Peru",city:"Ancash",lat:-9.2879894,lon:-77.6322454,role:"member",services:"Rooms,Lodging",wa:"51943769697"},
     {name:"Fundo Santa María",country:"Peru",city:"Cajamarca",lat:-7.1575,lon:-78.50652,role:"member",services:"Camping,Lodging",wa:"51980682363"},
-    {name:"Camper Site Mesa de los Santos",country:"Colombia",city:"Santander",lat:6.8577902,lon:-73.0647985,role:"member",services:"Camping,Overland",wa:""},
-    {name:"Hotel & Camping La Cumbre Del Macizo",country:"Colombia",city:"Macizo",lat:1.8899319,lon:-76.284248,role:"member",services:"Hotel,Camping",wa:""}
+    {name:"Camper Site Mesa de los Santos",country:"Colombia",city:"Santander",lat:6.8577902,lon:-73.0647985,role:"member",services:"Camping,Overland",wa:"573118983445"},
+    {name:"Hotel & Camping La Cumbre Del Macizo",country:"Colombia",city:"Macizo",lat:1.8899319,lon:-76.284248,role:"member",services:"Hotel,Camping",wa:"573204780261"}
   ];
   placePins(camps);
   document.getElementById('stat-members').textContent = camps.length;
