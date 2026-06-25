@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; font-family: 'DM Sans', sans-serif; padding: 12px 0; }
+  .wrap {
+    display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: space-between; gap: 12px;
+    background: #1C0D06; border-radius: 4px;
+    padding: 14px 20px;
+  }
+  .info { color: rgba(245,237,213,.5); font-size: 12px; line-height: 1.5; }
+  .info strong { display: block; color: #F5EDD5; font-size: 13px; margin-bottom: 2px; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 20px; border-radius: 3px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: all .15s; white-space: nowrap;
+  }
+  .btn-main { background: #C0392B; color: white; }
+  .btn-main:hover { background: #a93226; }
+  .btn-wa { background: #25D366; color: white; }
+  .btn-wa:hover { background: #1da851; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="info">
+    <strong>🗺 ARCA Network — Interactive Map</strong>
+    GPS location & full screen available in the full version
+  </div>
+  <div class="btns">
+    <a class="btn btn-main"
+       href="https://johnschArca.github.io/Arcamap/arca-mapa-v3.html"
+       target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+      </svg>
+      Open Full Map
+    </a>
+    <a class="btn btn-wa"
+       href="https://wa.me/?text=🌎%20ARCA%20Network%20Map%20-%20Campsites%20across%20South%20%26%20Central%20America%0Ahttps://johnschArca.github.io/Arcamap/arca-mapa-v3.html"
+       target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.544 5.876L0 24l6.317-1.522A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.9 0-3.68-.498-5.224-1.37l-.374-.22-3.748.903.938-3.65-.244-.386A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Share
+    </a>
+  </div>
+</div>
+</body>
+</html>
